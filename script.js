@@ -1,5 +1,7 @@
+// Supabase module import (gunakan ES Module via CDN)
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// Supabase credentials
 const supabaseUrl = "https://tvkoamtxxmmqpvsotjda.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo";
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -7,16 +9,10 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 let balance = 0;
 let transactions = [];
 let chart;
-let currentUser = null;
 
 const balanceDisplay = document.getElementById("balance");
 const transactionList = document.getElementById("transactionList");
 const filterCategory = document.getElementById("filterCategory");
-const loginSection = document.getElementById("loginSection");
-const appSection = document.getElementById("appSection");
-const loginButton = document.getElementById("loginButton");
-const form = document.getElementById("form");
-const amountInput = document.getElementById("amount");
 
 function formatRupiah(number) {
   return "Rp " + number.toLocaleString("id-ID");
@@ -73,11 +69,6 @@ function renderTransactions(filteredList = transactions) {
 async function addTransaction(e) {
   e.preventDefault();
 
-  if (!currentUser) {
-    alert("Anda harus login terlebih dahulu.");
-    return;
-  }
-
   const desc = document.getElementById("desc").value.trim();
   const rawAmount = document.getElementById("amount").value.replace(/\./g, "");
   const amount = parseFloat(rawAmount);
@@ -89,7 +80,7 @@ async function addTransaction(e) {
     return;
   }
 
-  const transaction = { description: desc, amount, type, category, user_id: currentUser.id };
+  const transaction = { description: desc, amount, type, category };
   const { data, error } = await supabase.from("transactions").insert([transaction]).select();
 
   if (error) {
@@ -111,12 +102,9 @@ async function addTransaction(e) {
 }
 
 async function loadTransactions() {
-  if (!currentUser) return;
-
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
-    .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -162,6 +150,8 @@ function filterTransactions() {
   }
 }
 
+// Format input jumlah otomatis dengan titik ribuan
+const amountInput = document.getElementById("amount");
 amountInput.addEventListener("input", (e) => {
   let value = e.target.value.replace(/\D/g, "");
   if (!value) {
@@ -171,78 +161,7 @@ amountInput.addEventListener("input", (e) => {
   e.target.value = parseInt(value).toLocaleString("id-ID");
 });
 
-function showLogin() {
-  loginSection.style.display = "block";
-  appSection.style.display = "none";
-}
-
-function showApp() {
-  loginSection.style.display = "none";
-  appSection.style.display = "block";
-}
-
-async function handleMagicLinkLogin() {
-  const hash = window.location.hash;
-  if (hash.includes("access_token") || hash.includes("error")) {
-    try {
-      const { data, error } = await supabase.auth.getSessionFromUrl();
-      if (error) {
-        alert("Link login kadaluarsa atau tidak valid. Silakan login ulang.");
-        window.location.hash = "";
-        showLogin();
-        return;
-      }
-      currentUser = data.session.user;
-
-      if (!currentUser.email_confirmed_at) {
-        alert("Email belum terverifikasi. Silakan cek email dan klik link verifikasi.");
-        await supabase.auth.signOut();
-        showLogin();
-        return;
-      }
-
-      window.history.replaceState(null, null, window.location.pathname);
-      showApp();
-      await loadTransactions();
-    } catch (err) {
-      console.error("Error saat proses magic link:", err);
-      alert("Terjadi kesalahan saat proses login. Silakan coba lagi.");
-      showLogin();
-    }
-  }
-}
-
-async function login() {
-  const email = prompt("Masukkan email untuk login:");
-  if (!email) return;
-
-  const { error } = await supabase.auth.signInWithOtp({ email });
-  if (error) {
-    alert("Gagal mengirim link login: " + error.message);
-  } else {
-    alert("Cek email Anda untuk login. Link berlaku 1 menit dan hanya bisa digunakan sekali.");
-  }
-}
-
-(async () => {
-  await handleMagicLinkLogin();
-
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !sessionData.session) {
-    showLogin();
-  } else {
-    currentUser = sessionData.session.user;
-    if (!currentUser.email_confirmed_at) {
-      alert("Email belum terverifikasi. Silakan cek email dan klik link verifikasi.");
-      await supabase.auth.signOut();
-      showLogin();
-      return;
-    }
-    showApp();
-    await loadTransactions();
-  }
-})();
-
-loginButton.addEventListener("click", login);
-form.addEventListener("submit", addTransaction);
-filterCategory.addEventListener("change", filterTransactions);
+// Event listener
+loadTransactions();
+document.getElementById("form").addEventListener("submit", addTransaction);
+document.getElementById("filterCategory").addEventListener("change", filterTransactions);
