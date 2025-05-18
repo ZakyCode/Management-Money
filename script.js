@@ -56,7 +56,7 @@ function renderTransactions(filteredList = transactions) {
     const li = document.createElement("li");
     li.classList.add(tx.type);
     li.innerHTML = `
-      ${tx.desc} - ${tx.category} - ${formatRupiah(tx.amount)}
+      ${tx.description} - ${tx.category} - ${formatRupiah(tx.amount)}
       <button onclick="deleteTransaction(${index})">Hapus</button>
     `;
     transactionList.appendChild(li);
@@ -76,7 +76,7 @@ async function addTransaction(e) {
     return;
   }
 
-  const transaction = { desc, amount, type, category };
+  const transaction = { description: desc, amount, type, category };
   transactions.push(transaction);
   balance += type === "income" ? amount : -amount;
 
