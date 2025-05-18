@@ -70,7 +70,8 @@ async function addTransaction(e) {
   e.preventDefault();
 
   const desc = document.getElementById("desc").value.trim();
-  const amount = parseFloat(document.getElementById("amount").value);
+  const rawAmount = document.getElementById("amount").value.replace(/\./g, "");
+  const amount = parseFloat(rawAmount);
   const type = document.getElementById("type").value;
   const category = document.getElementById("category").value;
 
@@ -80,16 +81,10 @@ async function addTransaction(e) {
   }
 
   const transaction = { description: desc, amount, type, category };
-  const { data, error } = await supabase.from("transactions").insert([transaction]).select().single();
-
-  if (error) {
-    console.error("Insert error:", error.message);
-    alert("Gagal menambahkan transaksi.");
-    return;
-  }
-
-  transactions.unshift(data);
+  transactions.push(transaction);
   balance += type === "income" ? amount : -amount;
+
+  await addTransactionToDB(transaction);
 
   document.getElementById("desc").value = "";
   document.getElementById("amount").value = "";
@@ -101,23 +96,9 @@ async function addTransaction(e) {
   updateChart();
 }
 
-async function deleteTransaction(index) {
-  const tx = transactions[index];
-
-  const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
-
-  if (error) {
-    console.error("Delete error:", error.message);
-    alert("Gagal menghapus transaksi.");
-    return;
-  }
-
-  balance += tx.type === "income" ? -tx.amount : tx.amount;
-  transactions.splice(index, 1);
-
-  updateBalanceDisplay();
-  renderTransactions();
-  updateChart();
+async function addTransactionToDB(transaction) {
+  const { error } = await supabase.from("transactions").insert([transaction]);
+  if (error) console.error("Insert error:", error.message);
 }
 
 async function loadTransactions() {
@@ -128,7 +109,6 @@ async function loadTransactions() {
 
   if (error) {
     console.error("Load error:", error.message);
-    alert("Gagal memuat data transaksi.");
     return;
   }
 
@@ -143,6 +123,16 @@ async function loadTransactions() {
   updateChart();
 }
 
+function deleteTransaction(index) {
+  const tx = transactions[index];
+  balance += tx.type === "income" ? -tx.amount : tx.amount;
+  transactions.splice(index, 1);
+  updateBalanceDisplay();
+  renderTransactions();
+  updateChart();
+  // Catatan: belum menghapus dari Supabase
+}
+
 function filterTransactions() {
   const selected = filterCategory.value;
   if (selected === "Semua") {
@@ -153,10 +143,18 @@ function filterTransactions() {
   }
 }
 
-// Event listeners
+// Format input jumlah otomatis dengan titik ribuan
+const amountInput = document.getElementById("amount");
+amountInput.addEventListener("input", (e) => {
+  let value = e.target.value.replace(/\D/g, "");
+  if (!value) {
+    e.target.value = "";
+    return;
+  }
+  e.target.value = parseInt(value).toLocaleString("id-ID");
+});
+
+// Event listener
 loadTransactions();
 document.getElementById("form").addEventListener("submit", addTransaction);
-filterCategory.addEventListener("change", filterTransactions);
-
-// Agar fungsi deleteTransaction bisa diakses dari HTML inline onclick
-window.deleteTransaction = deleteTransaction;
+document.getElementById("filterCategory").addEventListener("change", filterTransactions);
