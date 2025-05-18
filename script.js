@@ -81,10 +81,15 @@ async function addTransaction(e) {
   }
 
   const transaction = { description: desc, amount, type, category };
-  transactions.push(transaction);
-  balance += type === "income" ? amount : -amount;
+  const { data, error } = await supabase.from("transactions").insert([transaction]).select();
 
-  await addTransactionToDB(transaction);
+  if (error) {
+    console.error("Insert error:", error.message);
+    return;
+  }
+
+  transactions.unshift(data[0]);
+  balance += type === "income" ? amount : -amount;
 
   document.getElementById("desc").value = "";
   document.getElementById("amount").value = "";
@@ -94,11 +99,6 @@ async function addTransaction(e) {
   updateBalanceDisplay();
   renderTransactions();
   updateChart();
-}
-
-async function addTransactionToDB(transaction) {
-  const { error } = await supabase.from("transactions").insert([transaction]);
-  if (error) console.error("Insert error:", error.message);
 }
 
 async function loadTransactions() {
@@ -123,15 +123,22 @@ async function loadTransactions() {
   updateChart();
 }
 
-function deleteTransaction(index) {
+async function deleteTransaction(index) {
   const tx = transactions[index];
+  const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+  if (error) {
+    console.error("Delete error:", error.message);
+    return;
+  }
+
   balance += tx.type === "income" ? -tx.amount : tx.amount;
   transactions.splice(index, 1);
   updateBalanceDisplay();
   renderTransactions();
   updateChart();
-  // Catatan: belum menghapus dari Supabase
 }
+
+window.deleteTransaction = deleteTransaction;
 
 function filterTransactions() {
   const selected = filterCategory.value;
