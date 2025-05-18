@@ -152,7 +152,6 @@ function filterTransactions() {
   }
 }
 
-// Format input jumlah otomatis dengan titik ribuan
 const amountInput = document.getElementById("amount");
 amountInput.addEventListener("input", (e) => {
   let value = e.target.value.replace(/\D/g, "");
@@ -163,13 +162,13 @@ amountInput.addEventListener("input", (e) => {
   e.target.value = parseInt(value).toLocaleString("id-ID");
 });
 
-// Tangani redirect setelah magic link login
 async function handleMagicLinkLogin() {
   const hash = window.location.hash;
   if (hash.includes("access_token")) {
     const { error } = await supabase.auth.setSessionFromUrl({ storeSession: true });
     if (error) {
       console.error("Login exchange error:", error.message);
+      alert("Link login kadaluarsa atau tidak valid. Silakan login ulang.");
     } else {
       window.history.replaceState(null, null, window.location.pathname);
       location.reload();
@@ -177,7 +176,6 @@ async function handleMagicLinkLogin() {
   }
 }
 
-// Simple login (magic link prompt)
 async function login() {
   const email = prompt("Masukkan email untuk login:");
   if (!email) return;
@@ -186,20 +184,21 @@ async function login() {
   if (error) {
     alert("Gagal mengirim link login: " + error.message);
   } else {
-    alert("Cek email Anda untuk login.");
+    alert("Cek email Anda untuk login. Link berlaku hanya beberapa menit dan hanya bisa digunakan sekali.");
   }
 }
 
-// Inisialisasi aplikasi
 (async () => {
   await handleMagicLinkLogin();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    login();
-  } else {
-    currentUser = user;
-    loadTransactions();
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData.session) {
+    await login();
+    return;
   }
+
+  currentUser = sessionData.session.user;
+  await loadTransactions();
 })();
 
 document.getElementById("form").addEventListener("submit", addTransaction);
