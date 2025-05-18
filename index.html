@@ -2,10 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Manajemen Uang + Grafik</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manajemen Uang</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
   <div class="container">
@@ -15,12 +16,10 @@
       <h2>Saldo: <span id="balance">Rp 0</span></h2>
     </div>
 
-    <!-- FORM TRANSAKSI -->
     <form id="form" class="form">
       <input type="text" id="desc" placeholder="Deskripsi" required />
-      <input type="number" id="amount" placeholder="Jumlah" required min="0" />
+      <input type="text" id="amount" placeholder="Jumlah (misal: 50.000)" required />
       <select id="type">
-        <option value="Jenis" disabled selected>Pilih Jenis Transaksi</option>
         <option value="income">Pemasukan</option>
         <option value="expense">Pengeluaran</option>
       </select>
@@ -34,7 +33,6 @@
       <button type="submit">Tambah</button>
     </form>
 
-    <!-- FILTER -->
     <div class="filter">
       <label for="filterCategory">Filter Kategori:</label>
       <select id="filterCategory">
@@ -46,12 +44,10 @@
       </select>
     </div>
 
-    <!-- LIST DAN CHART -->
     <ul id="transactionList"></ul>
     <canvas id="myChart" width="400" height="200"></canvas>
   </div>
 
-  <!-- Load JS sebagai module -->
   <script type="module" src="script.js"></script>
 </body>
 </html>
