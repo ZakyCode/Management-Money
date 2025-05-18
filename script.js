@@ -103,13 +103,10 @@ async function addTransaction(e) {
 }
 
 async function loadTransactions() {
-  const { data: { user } } = await supabase.auth.getUser();
-  currentUser = user;
-
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -166,6 +163,20 @@ amountInput.addEventListener("input", (e) => {
   e.target.value = parseInt(value).toLocaleString("id-ID");
 });
 
+// Tangani redirect setelah magic link login
+async function handleMagicLinkLogin() {
+  const hash = window.location.hash;
+  if (hash.includes("access_token")) {
+    const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+    if (error) {
+      console.error("Login exchange error:", error.message);
+    } else {
+      window.history.replaceState(null, null, window.location.pathname);
+      location.reload();
+    }
+  }
+}
+
 // Simple login (magic link prompt)
 async function login() {
   const email = prompt("Masukkan email untuk login:");
@@ -179,15 +190,17 @@ async function login() {
   }
 }
 
-// Cek apakah user sudah login
-supabase.auth.getUser().then(({ data: { user } }) => {
+// Inisialisasi aplikasi
+(async () => {
+  await handleMagicLinkLogin();
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     login();
   } else {
     currentUser = user;
     loadTransactions();
   }
-});
+})();
 
 document.getElementById("form").addEventListener("submit", addTransaction);
 document.getElementById("filterCategory").addEventListener("change", filterTransactions);
