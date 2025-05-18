@@ -1,9 +1,7 @@
-// Supabase module import (gunakan ES Module via CDN)
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Supabase credentials
 const supabaseUrl = "https://tvkoamtxxmmqpvsotjda.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo";
+const supabaseKey = "YOUR_ANON_KEY_HERE";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 let balance = 0;
@@ -70,6 +68,11 @@ function renderTransactions(filteredList = transactions) {
 async function addTransaction(e) {
   e.preventDefault();
 
+  if (!currentUser) {
+    alert("Anda belum login.");
+    return;
+  }
+
   const desc = document.getElementById("desc").value.trim();
   const rawAmount = document.getElementById("amount").value.replace(/\./g, "");
   const amount = parseFloat(rawAmount);
@@ -103,6 +106,8 @@ async function addTransaction(e) {
 }
 
 async function loadTransactions() {
+  if (!currentUser) return;
+
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
@@ -126,6 +131,11 @@ async function loadTransactions() {
 }
 
 async function deleteTransaction(index) {
+  if (!currentUser) {
+    alert("Anda belum login.");
+    return;
+  }
+
   const tx = transactions[index];
   const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
   if (error) {
@@ -164,14 +174,15 @@ amountInput.addEventListener("input", (e) => {
 
 async function handleMagicLinkLogin() {
   const hash = window.location.hash;
-  if (hash.includes("access_token")) {
-    const { error } = await supabase.auth.setSessionFromUrl({ storeSession: true });
+  if (hash.includes("access_token") || hash.includes("error")) {
+    const { data, error } = await supabase.auth.getSessionFromUrl();
     if (error) {
       console.error("Login exchange error:", error.message);
       alert("Link login kadaluarsa atau tidak valid. Silakan login ulang.");
     } else {
+      currentUser = data.session.user;
       window.history.replaceState(null, null, window.location.pathname);
-      location.reload();
+      await loadTransactions();
     }
   }
 }
@@ -180,17 +191,11 @@ async function login() {
   const email = prompt("Masukkan email untuk login:");
   if (!email) return;
 
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: window.location.origin
-    }
-  });
-
+  const { error } = await supabase.auth.signInWithOtp({ email });
   if (error) {
     alert("Gagal mengirim link login: " + error.message);
   } else {
-    alert("Cek email Anda untuk login. Link hanya berlaku selama 1 menit dan hanya bisa digunakan sekali.");
+    alert("Cek email Anda untuk login. Link berlaku 1 menit dan hanya bisa digunakan sekali.");
   }
 }
 
