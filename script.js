@@ -9,6 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 let balance = 0;
 let transactions = [];
 let chart;
+let currentUser = null;
 
 const balanceDisplay = document.getElementById("balance");
 const transactionList = document.getElementById("transactionList");
@@ -80,7 +81,7 @@ async function addTransaction(e) {
     return;
   }
 
-  const transaction = { description: desc, amount, type, category };
+  const transaction = { description: desc, amount, type, category, user_id: currentUser.id };
   const { data, error } = await supabase.from("transactions").insert([transaction]).select();
 
   if (error) {
@@ -102,9 +103,13 @@ async function addTransaction(e) {
 }
 
 async function loadTransactions() {
+  const { data: { user } } = await supabase.auth.getUser();
+  currentUser = user;
+
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -161,7 +166,28 @@ amountInput.addEventListener("input", (e) => {
   e.target.value = parseInt(value).toLocaleString("id-ID");
 });
 
-// Event listener
-loadTransactions();
+// Simple login (magic link prompt)
+async function login() {
+  const email = prompt("Masukkan email untuk login:");
+  if (!email) return;
+
+  const { error } = await supabase.auth.signInWithOtp({ email });
+  if (error) {
+    alert("Gagal mengirim link login: " + error.message);
+  } else {
+    alert("Cek email Anda untuk login.");
+  }
+}
+
+// Cek apakah user sudah login
+supabase.auth.getUser().then(({ data: { user } }) => {
+  if (!user) {
+    login();
+  } else {
+    currentUser = user;
+    loadTransactions();
+  }
+});
+
 document.getElementById("form").addEventListener("submit", addTransaction);
 document.getElementById("filterCategory").addEventListener("change", filterTransactions);
