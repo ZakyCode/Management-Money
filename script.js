@@ -167,7 +167,7 @@ amountInput.addEventListener("input", (e) => {
 async function handleMagicLinkLogin() {
   const hash = window.location.hash;
   if (hash.includes("access_token")) {
-    const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+    const { error } = await supabase.auth.setSessionFromUrl({ storeSession: true });
     if (error) {
       console.error("Login exchange error:", error.message);
     } else {
@@ -193,8 +193,8 @@ async function login() {
 // Inisialisasi aplikasi
 (async () => {
   await handleMagicLinkLogin();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user) {
     login();
   } else {
     currentUser = user;
