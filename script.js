@@ -1,5 +1,7 @@
+// Supabase module import (gunakan ES Module via CDN)
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// Supabase credentials
 const supabaseUrl = "https://tvkoamtxxmmqpvsotjda.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo";
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -9,9 +11,12 @@ let transactions = [];
 let chart;
 let currentUser = null;
 
+// Elemen DOM
 const balanceDisplay = document.getElementById("balance");
 const transactionList = document.getElementById("transactionList");
 const filterCategory = document.getElementById("filterCategory");
+const loginSection = document.getElementById("loginSection");
+const appSection = document.getElementById("appSection");
 
 function formatRupiah(number) {
   return "Rp " + number.toLocaleString("id-ID");
@@ -68,11 +73,6 @@ function renderTransactions(filteredList = transactions) {
 async function addTransaction(e) {
   e.preventDefault();
 
-  if (!currentUser) {
-    alert("Anda belum login.");
-    return;
-  }
-
   const desc = document.getElementById("desc").value.trim();
   const rawAmount = document.getElementById("amount").value.replace(/\./g, "");
   const amount = parseFloat(rawAmount);
@@ -106,8 +106,6 @@ async function addTransaction(e) {
 }
 
 async function loadTransactions() {
-  if (!currentUser) return;
-
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
@@ -131,11 +129,6 @@ async function loadTransactions() {
 }
 
 async function deleteTransaction(index) {
-  if (!currentUser) {
-    alert("Anda belum login.");
-    return;
-  }
-
   const tx = transactions[index];
   const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
   if (error) {
@@ -172,18 +165,46 @@ amountInput.addEventListener("input", (e) => {
   e.target.value = parseInt(value).toLocaleString("id-ID");
 });
 
+function showLogin() {
+  loginSection.style.display = "block";
+  appSection.style.display = "none";
+}
+
+function showApp() {
+  loginSection.style.display = "none";
+  appSection.style.display = "block";
+}
+
 async function handleMagicLinkLogin() {
   const hash = window.location.hash;
   if (hash.includes("access_token") || hash.includes("error")) {
-    const { data, error } = await supabase.auth.getSessionFromUrl();
-    if (error) {
-      console.error("Login exchange error:", error.message);
-      alert("Link login kadaluarsa atau tidak valid. Silakan login ulang.");
-    } else {
+    try {
+      const { data, error } = await supabase.auth.getSessionFromUrl();
+      if (error) {
+        console.error("Login exchange error:", error.message);
+        alert("Link login kadaluarsa atau tidak valid. Silakan login ulang.");
+        window.location.hash = "";
+        showLogin();
+        return;
+      }
       currentUser = data.session.user;
+
+      if (!currentUser.email_confirmed_at) {
+        alert("Email belum terverifikasi. Silakan cek email dan klik link verifikasi.");
+        await supabase.auth.signOut();
+        showLogin();
+        return;
+      }
+
       window.history.replaceState(null, null, window.location.pathname);
+      showApp();
       await loadTransactions();
+    } catch (err) {
+      console.error("handleMagicLinkLogin error:", err);
+      showLogin();
     }
+  } else {
+    showLogin();
   }
 }
 
@@ -204,13 +225,23 @@ async function login() {
 
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !sessionData.session) {
-    await login();
+    showLogin();
     return;
   }
 
   currentUser = sessionData.session.user;
+
+  if (!currentUser.email_confirmed_at) {
+    alert("Email belum terverifikasi. Silakan cek email dan klik link verifikasi.");
+    await supabase.auth.signOut();
+    showLogin();
+    return;
+  }
+
+  showApp();
   await loadTransactions();
 })();
 
 document.getElementById("form").addEventListener("submit", addTransaction);
 document.getElementById("filterCategory").addEventListener("change", filterTransactions);
+document.getElementById("loginButton").addEventListener("click", login);
