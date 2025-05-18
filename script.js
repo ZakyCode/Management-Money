@@ -180,11 +180,17 @@ async function login() {
   const email = prompt("Masukkan email untuk login:");
   if (!email) return;
 
-  const { error } = await supabase.auth.signInWithOtp({ email });
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: window.location.origin
+    }
+  });
+
   if (error) {
     alert("Gagal mengirim link login: " + error.message);
   } else {
-    alert("Cek email Anda untuk login. Link berlaku hanya beberapa menit dan hanya bisa digunakan sekali.");
+    alert("Cek email Anda untuk login. Link hanya berlaku selama 1 menit dan hanya bisa digunakan sekali.");
   }
 }
 
