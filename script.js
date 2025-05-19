@@ -58,10 +58,10 @@ function renderTransactions(filteredList = transactions) {
   filteredList.forEach((tx, index) => {
     const li = document.createElement("li");
     li.classList.add(tx.type);
-    li.innerHTML = 
+    li.innerHTML = `
       ${tx.description} - ${tx.category} - ${formatRupiah(tx.amount)}
       <button onclick="deleteTransaction(${index})">Hapus</button>
-    ;
+    `;
     transactionList.appendChild(li);
   });
 }
