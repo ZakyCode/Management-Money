@@ -2,27 +2,17 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // Supabase credentials
 const supabaseUrl = "https://tvkoamtxxmmqpvsotjda.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo"; // ganti dengan key asli
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Element references
-const authForm = document.getElementById("authForm");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const authMessage = document.getElementById("authMessage");
-const authContainer = document.getElementById("authContainer");
-const mainContainer = document.getElementById("mainContainer");
-
-const form = document.getElementById("form");
-const balanceDisplay = document.getElementById("balance");
-const transactionList = document.getElementById("transactionList");
-const filterCategory = document.getElementById("filterCategory");
-const amountInput = document.getElementById("amount");
 
 let balance = 0;
 let transactions = [];
 let chart;
 let currentUser = null;
+
+const balanceDisplay = document.getElementById("balance");
+const transactionList = document.getElementById("transactionList");
+const filterCategory = document.getElementById("filterCategory");
 
 function formatRupiah(number) {
   return "Rp " + number.toLocaleString("id-ID");
@@ -52,7 +42,7 @@ function updateChart() {
     const ctx = document.getElementById("myChart").getContext("2d");
     chart = new Chart(ctx, {
       type: "bar",
-      data,
+      data: data,
       options: {
         responsive: true,
         plugins: {
@@ -86,11 +76,18 @@ async function addTransaction(e) {
   const category = document.getElementById("category").value;
 
   if (!desc || isNaN(amount) || amount <= 0 || category === "Semua") {
-    authMessage.textContent = "Isi semua kolom dengan benar!";
+    alert("Isi semua kolom dengan benar!");
     return;
   }
 
-  const transaction = { description: desc, amount, type, category, user_id: currentUser.id };
+  const transaction = {
+    description: desc,
+    amount,
+    type,
+    category,
+    user_id: currentUser.id // penting untuk RLS
+  };
+
   const { data, error } = await supabase.from("transactions").insert([transaction]).select();
 
   if (error) {
@@ -101,7 +98,11 @@ async function addTransaction(e) {
   transactions.unshift(data[0]);
   balance += type === "income" ? amount : -amount;
 
-  form.reset();
+  document.getElementById("desc").value = "";
+  document.getElementById("amount").value = "";
+  document.getElementById("type").value = "Jenis";
+  document.getElementById("category").value = "Semua";
+
   updateBalanceDisplay();
   renderTransactions();
   updateChart();
@@ -157,55 +158,38 @@ function filterTransactions() {
   }
 }
 
-amountInput.addEventListener("input", (e) => {
-  let value = e.target.value.replace(/\D/g, "");
-  if (!value) {
-    e.target.value = "";
-    return;
-  }
-  e.target.value = parseInt(value).toLocaleString("id-ID");
-});
-
-// Auth form event
-authForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    // Coba daftar jika login gagal
-    const signUp = await supabase.auth.signUp({ email, password });
-    if (signUp.error) {
-      authMessage.textContent = "Gagal login atau daftar.";
-      return;
-    } else {
-      currentUser = signUp.data.user;
-      showMainApp();
+// Format input jumlah otomatis dengan titik ribuan
+document.addEventListener("DOMContentLoaded", () => {
+  const amountInput = document.getElementById("amount");
+  amountInput.addEventListener("input", (e) => {
+    let value = e.target.value.replace(/\D/g, "");
+    if (!value) {
+      e.target.value = "";
       return;
     }
-  }
+    e.target.value = parseInt(value).toLocaleString("id-ID");
+  });
 
-  currentUser = data.user;
-  showMainApp();
+  // AUTH: Login otomatis jika belum login
+  supabase.auth.getUser().then(async ({ data: { user } }) => {
+    if (!user) {
+      const email = prompt("Masukkan email Anda:");
+      const password = prompt("Masukkan password:");
+
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert("Login gagal: " + error.message);
+        return;
+      }
+
+      currentUser = data.user;
+    } else {
+      currentUser = user;
+    }
+
+    // Setelah login berhasil, jalankan app
+    loadTransactions();
+    document.getElementById("form").addEventListener("submit", addTransaction);
+    document.getElementById("filterCategory").addEventListener("change", filterTransactions);
+  });
 });
-
-function showMainApp() {
-  authContainer.style.display = "none";
-  mainContainer.style.display = "block";
-  loadTransactions();
-}
-
-// Cek session saat halaman dimuat
-(async () => {
-  const { data } = await supabase.auth.getSession();
-  if (data.session) {
-    currentUser = data.session.user;
-    showMainApp();
-  }
-})();
-
-// Form transaksi
-form.addEventListener("submit", addTransaction);
-filterCategory.addEventListener("change", filterTransactions);
