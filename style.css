@@ -189,3 +189,34 @@ canvas {
     font-size: 1.1rem;
   }
 }
+
+#authContainer {
+  max-width: 400px;
+  margin: auto;
+  background-color: var(--card-bg);
+  padding: 25px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+#authForm input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+#authForm button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background-color: var(--primary-green);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
