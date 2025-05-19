@@ -235,3 +235,30 @@ canvas {
   padding: 8px 15px;
   background-color: var(--primary-red);
 }
+
+/* Tambahkan di style.css */
+button:disabled {
+  background-color: #cccccc !important;
+  cursor: not-allowed;
+}
+
+.loading {
+  position: relative;
+}
+.loading::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
