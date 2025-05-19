@@ -10,10 +10,19 @@ let balance = 0;
 let transactions = [];
 let chart;
 
+// DOM Elements
+const authContainer = document.getElementById("auth-container");
+const appContainer = document.getElementById("app-container");
+const loginBtn = document.getElementById("login-btn");
+const registerBtn = document.getElementById("register-btn");
+const logoutBtn = document.getElementById("logout-btn");
+const emailInput = document.getElementById("auth-email");
+const passwordInput = document.getElementById("auth-password");
 const balanceDisplay = document.getElementById("balance");
 const transactionList = document.getElementById("transactionList");
 const filterCategory = document.getElementById("filterCategory");
 
+// Fungsi utilitas
 function formatRupiah(number) {
   return "Rp " + number.toLocaleString("id-ID");
 }
@@ -66,6 +75,7 @@ function renderTransactions(filteredList = transactions) {
   });
 }
 
+// Fungsi transaksi
 async function addTransaction(e) {
   e.preventDefault();
 
@@ -80,8 +90,25 @@ async function addTransaction(e) {
     return;
   }
 
-  const transaction = { description: desc, amount, type, category };
-  const { data, error } = await supabase.from("transactions").insert([transaction]).select();
+  // Dapatkan user ID dari sesi
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert("Silakan login kembali");
+    return;
+  }
+
+  const transaction = { 
+    description: desc, 
+    amount, 
+    type, 
+    category,
+    user_id: user.id 
+  };
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert([transaction])
+    .select();
 
   if (error) {
     console.error("Insert error:", error.message);
@@ -102,9 +129,14 @@ async function addTransaction(e) {
 }
 
 async function loadTransactions() {
+  // Dapatkan user ID dari sesi
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -125,7 +157,11 @@ async function loadTransactions() {
 
 async function deleteTransaction(index) {
   const tx = transactions[index];
-  const { error } = await supabase.from("transactions").delete().eq("id", tx.id);
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", tx.id);
+
   if (error) {
     console.error("Delete error:", error.message);
     return;
@@ -138,15 +174,89 @@ async function deleteTransaction(index) {
   updateChart();
 }
 
-window.deleteTransaction = deleteTransaction;
+// Fungsi autentikasi
+async function handleLogin() {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
 
-function filterTransactions() {
-  const selected = filterCategory.value;
-  if (selected === "Semua") {
-    renderTransactions();
+  if (!email || !password) {
+    alert("Email dan password harus diisi");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    alert("Login gagal: " + error.message);
+    return;
+  }
+
+  showApp();
+}
+
+async function handleRegister() {
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  if (!email || !password) {
+    alert("Email dan password harus diisi");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert("Password minimal 6 karakter");
+    return;
+  }
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    alert("Registrasi gagal: " + error.message);
+    return;
+  }
+
+  alert("Registrasi berhasil! Silakan login");
+}
+
+async function handleLogout() {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Logout error:", error.message);
+    return;
+  }
+
+  showAuth();
+}
+
+function showApp() {
+  authContainer.style.display = "none";
+  appContainer.style.display = "block";
+  loadTransactions();
+}
+
+function showAuth() {
+  authContainer.style.display = "block";
+  appContainer.style.display = "none";
+  transactions = [];
+  balance = 0;
+  updateBalanceDisplay();
+  renderTransactions();
+}
+
+// Cek sesi saat pertama kali load
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (session) {
+    showApp();
   } else {
-    const filtered = transactions.filter(t => t.category === selected);
-    renderTransactions(filtered);
+    showAuth();
   }
 }
 
@@ -162,6 +272,22 @@ amountInput.addEventListener("input", (e) => {
 });
 
 // Event listener
-loadTransactions();
+checkSession();
 document.getElementById("form").addEventListener("submit", addTransaction);
 document.getElementById("filterCategory").addEventListener("change", filterTransactions);
+loginBtn.addEventListener("click", handleLogin);
+registerBtn.addEventListener("click", handleRegister);
+logoutBtn.addEventListener("click", handleLogout);
+
+// Fungsi global untuk delete
+window.deleteTransaction = deleteTransaction;
+
+function filterTransactions() {
+  const selected = filterCategory.value;
+  if (selected === "Semua") {
+    renderTransactions();
+  } else {
+    const filtered = transactions.filter(t => t.category === selected);
+    renderTransactions(filtered);
+  }
+}
