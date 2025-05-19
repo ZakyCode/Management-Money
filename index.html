@@ -10,43 +10,63 @@
 </head>
 <body>
   <div class="container">
-    <h1>Manajemen Uang</h1>
-
-    <div class="balance">
-      <h2>Saldo: <span id="balance">Rp 0</span></h2>
+    <div id="auth-container">
+      <h1>Manajemen Uang</h1>
+      <div class="auth-form">
+        <h2>Login / Daftar</h2>
+        <form id="auth-form">
+          <input type="email" id="auth-email" placeholder="Email" required />
+          <input type="password" id="auth-password" placeholder="Password" required />
+          <div class="auth-buttons">
+            <button type="button" id="login-btn">Login</button>
+            <button type="button" id="register-btn">Daftar</button>
+          </div>
+        </form>
+      </div>
     </div>
 
-    <form id="form" class="form">
-      <input type="text" id="desc" placeholder="Deskripsi" required />
-      <input type="text" id="amount" placeholder="Jumlah (misal: 50.000)" required />
-      <select id="type">
-        <option value="Jenis" disabled selected>Pilih Jenis Transaksi</option>
-        <option value="income">Pemasukan</option>
-        <option value="expense">Pengeluaran</option>
-      </select>
-      <select id="category">
-        <option value="Semua" disabled selected>Pilih Kategori</option>
-        <option value="Gaji">Gaji</option>
-        <option value="Makan">Makan</option>
-        <option value="Transportasi">Transportasi</option>
-        <option value="Lainnya">Lainnya</option>
-      </select>
-      <button type="submit">Tambah</button>
-    </form>
+    <div id="app-container" style="display: none;">
+      <div class="header">
+        <h1>Manajemen Uang</h1>
+        <button id="logout-btn">Logout</button>
+      </div>
 
-    <div class="filter">
-      <label for="filterCategory">Filter Kategori:</label>
-      <select id="filterCategory">
-        <option value="Semua">Semua</option>
-        <option value="Gaji">Gaji</option>
-        <option value="Makan">Makan</option>
-        <option value="Transportasi">Transportasi</option>
-        <option value="Lainnya">Lainnya</option>
-      </select>
+      <div class="balance">
+        <h2>Saldo: <span id="balance">Rp 0</span></h2>
+      </div>
+
+      <form id="form" class="form">
+        <input type="text" id="desc" placeholder="Deskripsi" required />
+        <input type="text" id="amount" placeholder="Jumlah (misal: 50.000)" required />
+        <select id="type">
+          <option value="Jenis" disabled selected>Pilih Jenis Transaksi</option>
+          <option value="income">Pemasukan</option>
+          <option value="expense">Pengeluaran</option>
+        </select>
+        <select id="category">
+          <option value="Semua" disabled selected>Pilih Kategori</option>
+          <option value="Gaji">Gaji</option>
+          <option value="Makan">Makan</option>
+          <option value="Transportasi">Transportasi</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+        <button type="submit">Tambah</button>
+      </form>
+
+      <div class="filter">
+        <label for="filterCategory">Filter Kategori:</label>
+        <select id="filterCategory">
+          <option value="Semua">Semua</option>
+          <option value="Gaji">Gaji</option>
+          <option value="Makan">Makan</option>
+          <option value="Transportasi">Transportasi</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+
+      <ul id="transactionList"></ul>
+      <canvas id="myChart" width="400" height="200"></canvas>
     </div>
-
-    <ul id="transactionList"></ul>
-    <canvas id="myChart" width="400" height="200"></canvas>
   </div>
 
   <script type="module" src="script.js"></script>
