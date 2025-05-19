@@ -1,14 +1,14 @@
+// Supabase module import (gunakan ES Module via CDN)
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // Supabase credentials
 const supabaseUrl = "https://tvkoamtxxmmqpvsotjda.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo"; // ganti dengan key asli
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo";
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 let balance = 0;
 let transactions = [];
 let chart;
-let currentUser = null;
 
 const balanceDisplay = document.getElementById("balance");
 const transactionList = document.getElementById("transactionList");
@@ -80,14 +80,7 @@ async function addTransaction(e) {
     return;
   }
 
-  const transaction = {
-    description: desc,
-    amount,
-    type,
-    category,
-    user_id: currentUser.id // penting untuk RLS
-  };
-
+  const transaction = { description: desc, amount, type, category };
   const { data, error } = await supabase.from("transactions").insert([transaction]).select();
 
   if (error) {
@@ -100,7 +93,7 @@ async function addTransaction(e) {
 
   document.getElementById("desc").value = "";
   document.getElementById("amount").value = "";
-  document.getElementById("type").value = "Jenis";
+  document.getElementById("type").value = "income";
   document.getElementById("category").value = "Semua";
 
   updateBalanceDisplay();
@@ -112,7 +105,6 @@ async function loadTransactions() {
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
-    .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -159,37 +151,17 @@ function filterTransactions() {
 }
 
 // Format input jumlah otomatis dengan titik ribuan
-document.addEventListener("DOMContentLoaded", () => {
-  const amountInput = document.getElementById("amount");
-  amountInput.addEventListener("input", (e) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (!value) {
-      e.target.value = "";
-      return;
-    }
-    e.target.value = parseInt(value).toLocaleString("id-ID");
-  });
-
-  // AUTH: Login otomatis jika belum login
-  supabase.auth.getUser().then(async ({ data: { user } }) => {
-    if (!user) {
-      const email = prompt("Masukkan email Anda:");
-      const password = prompt("Masukkan password:");
-
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert("Login gagal: " + error.message);
-        return;
-      }
-
-      currentUser = data.user;
-    } else {
-      currentUser = user;
-    }
-
-    // Setelah login berhasil, jalankan app
-    loadTransactions();
-    document.getElementById("form").addEventListener("submit", addTransaction);
-    document.getElementById("filterCategory").addEventListener("change", filterTransactions);
-  });
+const amountInput = document.getElementById("amount");
+amountInput.addEventListener("input", (e) => {
+  let value = e.target.value.replace(/\D/g, "");
+  if (!value) {
+    e.target.value = "";
+    return;
+  }
+  e.target.value = parseInt(value).toLocaleString("id-ID");
 });
+
+// Event listener
+loadTransactions();
+document.getElementById("form").addEventListener("submit", addTransaction);
+document.getElementById("filterCategory").addEventListener("change", filterTransactions);
