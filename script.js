@@ -221,7 +221,7 @@ async function handleRegister() {
     return;
   }
 
-  alert("Registrasi berhasil! Silakan login");
+  alert("Registrasi berhasil! Tolong Cek email yang di masukkan tadi dan, Silakan login");
 }
 
 async function handleLogout() {
