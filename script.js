@@ -136,11 +136,11 @@ async function addTransaction(e) {
   updateChart();
 
   await Swal.fire({
-    position: 'top-end',
     icon: 'success',
-    title: 'Transaksi berhasil ditambahkan',
-    showConfirmButton: false,
-    timer: 1500
+    title: 'Berhasil',
+    text: 'Transaksi berhasil ditambahkan',
+    timer: 1500,
+    showConfirmButton: false
   });
 }
 
