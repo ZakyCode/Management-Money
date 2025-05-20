@@ -31,6 +31,14 @@ function updateBalanceDisplay() {
   balanceDisplay.textContent = formatRupiah(balance);
 }
 
+async function showAlert(icon, title, text) {
+  await Swal.fire({
+    icon,
+    title,
+    text
+  });
+}
+
 function updateChart() {
   const incomeTotal = transactions.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
   const expenseTotal = transactions.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
@@ -86,14 +94,14 @@ async function addTransaction(e) {
   const category = document.getElementById("category").value;
 
   if (!desc || isNaN(amount) || amount <= 0 || category === "Semua") {
-    alert("Isi semua kolom dengan benar!");
+    await showAlert('error', 'Error', 'Isi semua kolom dengan benar!');
     return;
   }
 
   // Dapatkan user ID dari sesi
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
-    alert("Silakan login kembali");
+    await showAlert('error', 'Error', 'Silakan login kembali');
     return;
   }
 
@@ -111,7 +119,7 @@ async function addTransaction(e) {
     .select();
 
   if (error) {
-    console.error("Insert error:", error.message);
+    await showAlert('error', 'Error', 'Gagal menambahkan transaksi: ' + error.message);
     return;
   }
 
@@ -126,6 +134,14 @@ async function addTransaction(e) {
   updateBalanceDisplay();
   renderTransactions();
   updateChart();
+
+  await Swal.fire({
+    position: 'top-end',
+    icon: 'success',
+    title: 'Transaksi berhasil ditambahkan',
+    showConfirmButton: false,
+    timer: 1500
+  });
 }
 
 async function loadTransactions() {
@@ -140,7 +156,7 @@ async function loadTransactions() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Load error:", error.message);
+    await showAlert('error', 'Error', 'Gagal memuat transaksi: ' + error.message);
     return;
   }
 
@@ -157,13 +173,27 @@ async function loadTransactions() {
 
 async function deleteTransaction(index) {
   const tx = transactions[index];
+  
+  const result = await Swal.fire({
+    title: 'Apakah Anda yakin?',
+    text: `Anda akan menghapus transaksi "${tx.description}"`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Ya, hapus!',
+    cancelButtonText: 'Batal'
+  });
+
+  if (!result.isConfirmed) return;
+
   const { error } = await supabase
     .from("transactions")
     .delete()
     .eq("id", tx.id);
 
   if (error) {
-    console.error("Delete error:", error.message);
+    await showAlert('error', 'Error', 'Gagal menghapus transaksi: ' + error.message);
     return;
   }
 
@@ -172,6 +202,14 @@ async function deleteTransaction(index) {
   updateBalanceDisplay();
   renderTransactions();
   updateChart();
+
+  await Swal.fire({
+    icon: 'success',
+    title: 'Berhasil',
+    text: 'Transaksi berhasil dihapus',
+    timer: 1500,
+    showConfirmButton: false
+  });
 }
 
 // Fungsi autentikasi
@@ -180,7 +218,7 @@ async function handleLogin() {
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    alert("Email dan password harus diisi");
+    await showAlert('error', 'Error', 'Email dan password harus diisi');
     return;
   }
 
@@ -190,7 +228,7 @@ async function handleLogin() {
   });
 
   if (error) {
-    alert("Login gagal: " + error.message);
+    await showAlert('error', 'Login Gagal', error.message);
     return;
   }
 
@@ -202,12 +240,12 @@ async function handleRegister() {
   const password = passwordInput.value.trim();
 
   if (!email || !password) {
-    alert("Email dan password harus diisi");
+    await showAlert('error', 'Error', 'Email dan password harus diisi');
     return;
   }
 
   if (password.length < 6) {
-    alert("Password minimal 6 karakter");
+    await showAlert('error', 'Error', 'Password minimal 6 karakter');
     return;
   }
 
@@ -217,17 +255,22 @@ async function handleRegister() {
   });
 
   if (error) {
-    alert("Registrasi gagal: " + error.message);
+    await showAlert('error', 'Registrasi Gagal', error.message);
     return;
   }
 
-  alert("Registrasi berhasil! Tolong Cek email yang di masukkan tadi dan, Silakan login");
+  await Swal.fire({
+    icon: 'success',
+    title: 'Registrasi Berhasil!',
+    html: 'Tolong cek email yang dimasukkan tadi dan silakan login',
+    confirmButtonText: 'OK'
+  });
 }
 
 async function handleLogout() {
   const { error } = await supabase.auth.signOut();
   if (error) {
-    console.error("Logout error:", error.message);
+    await showAlert('error', 'Error', 'Gagal logout: ' + error.message);
     return;
   }
 
