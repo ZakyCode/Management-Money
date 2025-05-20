@@ -334,3 +334,7 @@ function filterTransactions() {
     renderTransactions(filtered);
   }
 }
+
+ function onSubmit(token) {
+     document.getElementById("6LfRBkErAAAAAIIVBRojE0aXhhrSSDY2oMNHZnTe").submit();
+   }
