@@ -252,44 +252,41 @@ async function handleRegister() {
     return;
   }
 
-  // Cek apakah email sudah terdaftar
-  const { data: { users }, error: checkError } = await supabase.auth.admin.listUsers({
-    filter: `email = '${email}'`
-  });
+  try {
+    // Cek apakah email sudah terdaftar menggunakan RPC
+    const { data: emailRegistered, error: checkError } = await supabase
+      .rpc('is_email_registered', { email_text: email });
 
-  if (checkError) {
-    console.error(checkError);
-    await showAlert('error', 'Error', 'Gagal memeriksa email. Silakan coba lagi.');
-    return;
-  }
-
-  if (users && users.length > 0) {
-    await showAlert('error', 'Pendaftaran Gagal', 'Email sudah terdaftar! Silakan gunakan email lain atau login');
-    return;
-  }
-
-  // Jika email belum terdaftar, lanjutkan pendaftaran
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        email: email
-      }
+    if (checkError) throw checkError;
+    
+    if (emailRegistered) {
+      await showAlert('error', 'Pendaftaran Gagal', 'Email sudah terdaftar! Silakan login atau gunakan email lain');
+      return;
     }
-  });
 
-  if (error) {
-    await showAlert('error', 'Registrasi Gagal', error.message);
-    return;
+    // Lanjutkan pendaftaran jika email belum terdaftar
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          email: email
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Registrasi Berhasil!',
+      html: 'Tolong cek email Anda untuk verifikasi dan silakan login',
+      confirmButtonText: 'OK'
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    await showAlert('error', 'Registrasi Gagal', error.message || 'Terjadi kesalahan saat mendaftar');
   }
-
-  await Swal.fire({
-    icon: 'success',
-    title: 'Registrasi Berhasil!',
-    html: 'Tolong cek email Anda untuk verifikasi dan silakan login',
-    confirmButtonText: 'OK'
-  });
 }
 
 async function handleLogout() {
