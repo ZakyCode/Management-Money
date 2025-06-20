@@ -128,7 +128,7 @@ async function addTransaction(e) {
 
   document.getElementById("desc").value = "";
   document.getElementById("amount").value = "";
-  document.getElementById("type").value = "income";
+  document.getElementById("type").value = "Jenis";
   document.getElementById("category").value = "Semua";
 
   updateBalanceDisplay();
