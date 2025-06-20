@@ -228,7 +228,7 @@ async function handleLogin() {
   });
 
   if (error) {
-    await showAlert('error', 'Login Gagal', akun tidak terdaftar di database!);
+    await showAlert('error', 'Login Gagal', 'akun tidak terdaftar di database!');
     return;
   }
 
