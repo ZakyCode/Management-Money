@@ -93,7 +93,7 @@ async function addTransaction(e) {
   const type = document.getElementById("type").value;
   const category = document.getElementById("category").value;
 
-  if (!desc || isNaN(amount) || amount <= 0 || category === "Semua") {
+  if (!desc || isNaN(amount) || amount <= 0 || type === "Jenis" || category === "Semua") {
     await showAlert('error', 'Error', 'Isi semua kolom dengan benar!');
     return;
   }
@@ -132,7 +132,7 @@ async function addTransaction(e) {
   document.getElementById("category").value = "Semua";
 
   updateBalanceDisplay();
-  renderTransactions();
+  filterTransactions(); // Update tampilan sesuai filter yang aktif
   updateChart();
 
   await Swal.fire({
@@ -167,8 +167,11 @@ async function loadTransactions() {
   });
 
   updateBalanceDisplay();
-  renderTransactions();
   updateChart();
+  
+  // Reset filter dropdown
+  filterCategory.value = "";
+  transactionList.innerHTML = ""; // Kosongkan daftar transaksi sampai filter dipilih
 }
 
 async function deleteTransaction(index) {
@@ -200,7 +203,7 @@ async function deleteTransaction(index) {
   balance += tx.type === "income" ? -tx.amount : tx.amount;
   transactions.splice(index, 1);
   updateBalanceDisplay();
-  renderTransactions();
+  filterTransactions(); // Update tampilan sesuai filter yang aktif
   updateChart();
 
   await Swal.fire({
@@ -289,17 +292,22 @@ function showAuth() {
   transactions = [];
   balance = 0;
   updateBalanceDisplay();
-  renderTransactions();
+  transactionList.innerHTML = "";
 }
 
-// Cek sesi saat pertama kali load
-async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+function filterTransactions() {
+  const selected = filterCategory.value;
+  if (!selected) {
+    // Jika belum memilih kategori, kosongkan daftar transaksi
+    transactionList.innerHTML = "";
+    return;
+  }
   
-  if (session) {
-    showApp();
+  if (selected === "Semua") {
+    renderTransactions();
   } else {
-    showAuth();
+    const filtered = transactions.filter(t => t.category === selected);
+    renderTransactions(filtered);
   }
 }
 
@@ -317,7 +325,7 @@ amountInput.addEventListener("input", (e) => {
 // Event listener
 checkSession();
 document.getElementById("form").addEventListener("submit", addTransaction);
-document.getElementById("filterCategory").addEventListener("change", filterTransactions);
+filterCategory.addEventListener("change", filterTransactions);
 loginBtn.addEventListener("click", handleLogin);
 registerBtn.addEventListener("click", handleRegister);
 logoutBtn.addEventListener("click", handleLogout);
@@ -325,12 +333,13 @@ logoutBtn.addEventListener("click", handleLogout);
 // Fungsi global untuk delete
 window.deleteTransaction = deleteTransaction;
 
-function filterTransactions() {
-  const selected = filterCategory.value;
-  if (selected === "Semua") {
-    renderTransactions();
+// Cek sesi saat pertama kali load
+async function checkSession() {
+  const { data: { session } } = await supabase.auth.getSession();
+  
+  if (session) {
+    showApp();
   } else {
-    const filtered = transactions.filter(t => t.category === selected);
-    renderTransactions(filtered);
+    showAuth();
   }
 }
