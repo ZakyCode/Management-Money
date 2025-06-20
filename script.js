@@ -130,7 +130,7 @@ async function addTransaction(e) {
   document.getElementById("amount").value = "";
   document.getElementById("type").value = "Jenis";
   document.getElementById("category").value = "Semua";
-  document.getElementById("filterCategory").value = "Kategori";
+  document.getElementById("filterCategory").value = "kategori";
 
   updateBalanceDisplay();
   renderTransactions();
