@@ -252,9 +252,31 @@ async function handleRegister() {
     return;
   }
 
+  // Cek apakah email sudah terdaftar
+  const { data: users, error: checkError } = await supabase
+    .from('users')
+    .select('email')
+    .eq('email', email);
+
+  if (checkError) {
+    await showAlert('error', 'Error', 'Gagal memeriksa email: ' + checkError.message);
+    return;
+  }
+
+  if (users && users.length > 0) {
+    await showAlert('error', 'Pendaftaran Gagal', 'Email sudah terdaftar! Silakan gunakan email lain atau login');
+    return;
+  }
+
+  // Jika email belum terdaftar, lanjutkan pendaftaran
   const { data, error } = await supabase.auth.signUp({
     email,
-    password
+    password,
+    options: {
+      data: {
+        email: email // Simpan email di user_metadata
+      }
+    }
   });
 
   if (error) {
