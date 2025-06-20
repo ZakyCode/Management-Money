@@ -132,7 +132,7 @@ async function addTransaction(e) {
   document.getElementById("category").value = "Semua";
 
   updateBalanceDisplay();
-  filterTransactions(); // Update tampilan sesuai filter yang aktif
+  filterTransactions();
   updateChart();
 
   await Swal.fire({
@@ -171,7 +171,7 @@ async function loadTransactions() {
   
   // Reset filter dropdown
   filterCategory.value = "";
-  transactionList.innerHTML = ""; // Kosongkan daftar transaksi sampai filter dipilih
+  transactionList.innerHTML = "";
 }
 
 async function deleteTransaction(index) {
@@ -203,7 +203,7 @@ async function deleteTransaction(index) {
   balance += tx.type === "income" ? -tx.amount : tx.amount;
   transactions.splice(index, 1);
   updateBalanceDisplay();
-  filterTransactions(); // Update tampilan sesuai filter yang aktif
+  filterTransactions();
   updateChart();
 
   await Swal.fire({
@@ -231,7 +231,7 @@ async function handleLogin() {
   });
 
   if (error) {
-    await showAlert('error', 'Login Gagal', 'akun tidak terdaftar di database!');
+    await showAlert('error', 'Login Gagal', 'Akun tidak terdaftar atau password salah!');
     return;
   }
 
@@ -253,13 +253,13 @@ async function handleRegister() {
   }
 
   // Cek apakah email sudah terdaftar
-  const { data: users, error: checkError } = await supabase
-    .from('users')
-    .select('email')
-    .eq('email', email);
+  const { data: { users }, error: checkError } = await supabase.auth.admin.listUsers({
+    filter: `email = '${email}'`
+  });
 
   if (checkError) {
-    await showAlert('error', 'Error', 'Gagal memeriksa email: ' + checkError.message);
+    console.error(checkError);
+    await showAlert('error', 'Error', 'Gagal memeriksa email. Silakan coba lagi.');
     return;
   }
 
@@ -274,7 +274,7 @@ async function handleRegister() {
     password,
     options: {
       data: {
-        email: email // Simpan email di user_metadata
+        email: email
       }
     }
   });
@@ -287,7 +287,7 @@ async function handleRegister() {
   await Swal.fire({
     icon: 'success',
     title: 'Registrasi Berhasil!',
-    html: 'Tolong cek email yang dimasukkan tadi dan silakan login',
+    html: 'Tolong cek email Anda untuk verifikasi dan silakan login',
     confirmButtonText: 'OK'
   });
 }
@@ -320,7 +320,6 @@ function showAuth() {
 function filterTransactions() {
   const selected = filterCategory.value;
   if (!selected) {
-    // Jika belum memilih kategori, kosongkan daftar transaksi
     transactionList.innerHTML = "";
     return;
   }
@@ -345,12 +344,14 @@ amountInput.addEventListener("input", (e) => {
 });
 
 // Event listener
-checkSession();
-document.getElementById("form").addEventListener("submit", addTransaction);
-filterCategory.addEventListener("change", filterTransactions);
-loginBtn.addEventListener("click", handleLogin);
-registerBtn.addEventListener("click", handleRegister);
-logoutBtn.addEventListener("click", handleLogout);
+document.addEventListener("DOMContentLoaded", () => {
+  checkSession();
+  document.getElementById("form").addEventListener("submit", addTransaction);
+  filterCategory.addEventListener("change", filterTransactions);
+  loginBtn.addEventListener("click", handleLogin);
+  registerBtn.addEventListener("click", handleRegister);
+  logoutBtn.addEventListener("click", handleLogout);
+});
 
 // Fungsi global untuk delete
 window.deleteTransaction = deleteTransaction;
