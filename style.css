@@ -34,11 +34,35 @@ body {
   box-shadow: var(--shadow);
 }
 
+
+
+/* togle password */
+.password-container {
+  position: relative;
+  margin-top: 10px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  padding: 0 10px;
+}
+
 .toggle-password i {
   font-style: normal;
   color: #777;
   font-size: 1rem;
 }
+
+/* Pastikan input password memiliki padding kanan yang cukup */
+#auth-password {
+  padding-right: 40px !important;
+}
+
 
 /* Heading */
 h1 {
