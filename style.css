@@ -39,13 +39,13 @@ body {
 /* togle password */
 .password-container {
   position: relative;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .toggle-password {
   position: absolute;
   right: 10px;
-  top: 50%;
+  top: 20%;
   transform: translateY(-50%);
   cursor: pointer;
   user-select: none;
