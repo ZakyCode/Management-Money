@@ -1,264 +1,207 @@
-/* Reset dasar */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-/* Warna dan font */
+/* Tambahkan di :root */
 :root {
-  --primary-green: #28a745;
-  --primary-red: #dc3545;
-  --background: #f9f9f9;
-  --card-bg: #ffffff;
-  --text-dark: #333;
-  --text-light: #777;
-  --border: #ddd;
-  --shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  --radius: 10px;
+  /* Tambahkan variabel baru */
+  --primary-green-hover: #218838;
+  --primary-red-hover: #c82333;
+  --transition: all 0.3s ease;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --font-sm: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.25rem;
+  --font-xl: 1.5rem;
+  --font-xxl: 1.8rem;
 }
 
+/* Perbaikan body */
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: var(--background);
-  color: var(--text-dark);
-  padding: 20px;
+  line-height: 1.6;
+  padding: var(--spacing-lg);
 }
 
+/* Perbaikan container */
 .container {
-  max-width: 600px;
-  margin: auto;
-  background-color: var(--card-bg);
-  padding: 25px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  max-width: 800px; /* Sedikit lebih lebar */
+  margin: var(--spacing-xl) auto;
+  padding: var(--spacing-xl);
 }
 
-/* Heading */
+/* Typography yang lebih baik */
 h1 {
-  text-align: center;
-  margin-bottom: 20px;
-  font-size: 1.8rem;
+  font-size: var(--font-xxl);
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-dark);
+  font-weight: 600;
 }
 
 h2 {
-  text-align: center;
-  margin-bottom: 15px;
-  font-size: 1.4rem;
+  font-size: var(--font-xl);
+  margin-bottom: var(--spacing-md);
+  font-weight: 500;
 }
 
-/* Form */
-.form,
-.filter {
-  margin-top: 20px;
-}
-
+/* Form yang lebih baik */
 .form input,
 .form select,
 .filter select {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 1rem;
-  transition: border 0.3s;
+  transition: var(--transition);
+  padding: var(--spacing-sm) var(--spacing-md);
 }
 
-.form input:focus,
-.form select:focus,
-.filter select:focus {
-  border-color: var(--primary-green);
-  outline: none;
-}
-
+/* Button enhancements */
 button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 15px;
-  background-color: var(--primary-green);
-  border: none;
-  color: white;
-  font-weight: bold;
-  font-size: 1rem;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: background-color 0.3s;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
 
-button:hover {
-  background-color: #218838;
+button:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
 }
 
-/* Transaction List */
-ul {
-  list-style: none;
-  margin-top: 20px;
-  padding: 0;
+button:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
 }
 
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20);
+    opacity: 0;
+  }
+}
+
+/* Transaction List enhancements */
 ul li {
-  background-color: var(--background);
-  padding: 15px;
-  border-left: 5px solid;
+  transition: var(--transition);
+  padding: var(--spacing-md);
+}
+
+/* Tambahkan micro-interactions */
+.form-group {
+  margin-bottom: var(--spacing-md);
+  position: relative;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* Error states */
+.error-message {
+  color: var(--primary-red);
+  font-size: var(--font-sm);
+  margin-top: var(--spacing-sm);
+  display: none;
+}
+
+.input-error {
+  border-color: var(--primary-red) !important;
+}
+
+.input-error + .error-message {
+  display: block;
+}
+
+/* Success message */
+.success-message {
+  background-color: rgba(40, 167, 69, 0.1);
+  color: var(--primary-green);
+  padding: var(--spacing-md);
   border-radius: var(--radius);
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin: var(--spacing-md) 0;
+  text-align: center;
+  display: none;
+}
+
+/* Dashboard stats */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing-md);
+  margin: var(--spacing-lg) 0;
+}
+
+.stat-card {
+  background: white;
+  padding: var(--spacing-md);
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
-  transition: transform 0.2s;
+  text-align: center;
 }
 
-ul li:hover {
-  transform: translateY(-2px);
+.stat-value {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  margin: var(--spacing-sm) 0;
 }
 
-li.income {
-  border-color: var(--primary-green);
+.stat-label {
+  color: var(--text-light);
+  font-size: var(--font-sm);
 }
 
-li.expense {
-  border-color: var(--primary-red);
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: var(--spacing-xl) 0;
+  color: var(--text-light);
 }
 
-li button {
-  background-color: var(--primary-red);
-  padding: 6px 10px;
-  border: none;
-  border-radius: var(--radius);
-  color: white;
+.empty-state img {
+  max-width: 200px;
+  margin-bottom: var(--spacing-md);
+  opacity: 0.7;
+}
+
+/* Dark mode toggle */
+.theme-toggle {
+  position: fixed;
+  bottom: var(--spacing-lg);
+  right: var(--spacing-lg);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: background-color 0.3s;
+  z-index: 100;
 }
 
-li button:hover {
-  background-color: #c82333;
-}
-
-/* Chart */
-canvas {
-  margin-top: 30px;
-  width: 100% !important;
-  height: auto !important;
-}
-
-/* Responsive Design */
+/* Responsive improvements */
 @media (max-width: 768px) {
-  .container {
-    padding: 20px;
-  }
-
-  h1 {
-    font-size: 1.6rem;
-  }
-
-  h2 {
-    font-size: 1.2rem;
-  }
-
-  button,
-  .form input,
-  .form select,
-  .filter select {
-    font-size: 0.95rem;
-  }
-
-  li {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  li button {
-    margin-top: 8px;
-    width: 100%;
+  .stats-container {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 480px) {
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+  
   .container {
-    padding: 15px;
+    padding: var(--spacing-md);
   }
-
-  h1 {
-    font-size: 1.4rem;
-  }
-
-  h2 {
-    font-size: 1.1rem;
-  }
-}
-
-  border-radius: var(--radius);
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-/* Auth Styles */
-.auth-form {
-  background-color: var(--card-bg);
-  padding: 25px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  margin-top: 20px;
-}
-
-.auth-form input {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 1rem;
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.auth-buttons button {
-  flex: 1;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-#logout-btn {
-  width: auto;
-  padding: 8px 15px;
-  background-color: var(--primary-red);
-}
-
-/* Tambahkan di style.css */
-button:disabled {
-  background-color: #cccccc !important;
-  cursor: not-allowed;
-}
-
-.loading {
-  position: relative;
-}
-.loading::after {
-  content: "";
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 15px;
-  height: 15px;
-  border: 2px solid white;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: translateY(-50%) rotate(360deg); }
 }
