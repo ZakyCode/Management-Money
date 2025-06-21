@@ -340,9 +340,26 @@ amountInput.addEventListener("input", (e) => {
   e.target.value = parseInt(value).toLocaleString("id-ID");
 });
 
+function setupPasswordToggle() {
+  const passwordInput = document.getElementById('auth-password');
+  const togglePassword = document.querySelector('.toggle-password');
+  
+  if (passwordInput && togglePassword) {
+    togglePassword.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      const icon = this.querySelector('i');
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
+    });
+  }
+}
+
 // Event listener
 document.addEventListener("DOMContentLoaded", () => {
   checkSession();
+  setupPasswordToggle();
   document.getElementById("form").addEventListener("submit", addTransaction);
   filterCategory.addEventListener("change", filterTransactions);
   loginBtn.addEventListener("click", handleLogin);
