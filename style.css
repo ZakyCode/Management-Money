@@ -1,106 +1,68 @@
-/* Reset dan Base Styles */
+/* Reset dasar */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Enhanced Design System */
+/* Warna dan font */
 :root {
-  /* Warna utama */
   --primary-green: #28a745;
-  --primary-green-hover: #218838;
-  --primary-green-light: rgba(40, 167, 69, 0.1);
   --primary-red: #dc3545;
-  --primary-red-hover: #c82333;
-  --primary-red-light: rgba(220, 53, 69, 0.1);
-  
-  /* Warna netral */
   --background: #f9f9f9;
   --card-bg: #ffffff;
   --text-dark: #333;
-  --text-medium: #555;
   --text-light: #777;
-  --border: #e0e0e0;
-  --border-dark: #ccc;
-  
-  /* Efek */
-  --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+  --border: #ddd;
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
   --radius: 10px;
-  --transition: all 0.25s ease;
 }
 
 body {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: var(--background);
   color: var(--text-dark);
-  line-height: 1.5;
   padding: 20px;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* Enhanced Container */
 .container {
   max-width: 600px;
-  margin: 30px auto;
+  margin: auto;
   background-color: var(--card-bg);
-  padding: 28px;
+  padding: 25px;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  transition: var(--transition);
 }
 
-.container:hover {
-  box-shadow: var(--shadow-hover);
-}
-
-/* Enhanced Typography */
+/* Heading */
 h1 {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   font-size: 1.8rem;
-  font-weight: 700;
-  color: var(--text-dark);
 }
 
 h2 {
   text-align: center;
-  margin-bottom: 18px;
+  margin-bottom: 15px;
   font-size: 1.4rem;
-  font-weight: 600;
-  color: var(--text-medium);
 }
 
-/* Enhanced Form Elements */
+/* Form */
 .form,
 .filter {
-  margin-top: 24px;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.9rem;
-  color: var(--text-medium);
-  font-weight: 500;
+  margin-top: 20px;
 }
 
 .form input,
 .form select,
 .filter select {
   width: 100%;
-  padding: 12px 14px;
-  margin-top: 4px;
+  padding: 12px;
+  margin-top: 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 1rem;
-  transition: var(--transition);
-  background-color: var(--card-bg);
+  transition: border 0.3s;
 }
 
 .form input:focus,
@@ -108,182 +70,84 @@ h2 {
 .filter select:focus {
   border-color: var(--primary-green);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
 }
 
-/* Enhanced Buttons */
 button {
   width: 100%;
   padding: 12px;
-  margin-top: 16px;
+  margin-top: 15px;
   background-color: var(--primary-green);
   border: none;
   color: white;
-  font-weight: 600;
+  font-weight: bold;
   font-size: 1rem;
   border-radius: var(--radius);
   cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  transition: background-color 0.3s;
 }
 
 button:hover {
-  background-color: var(--primary-green-hover);
-  transform: translateY(-1px);
+  background-color: #218838;
 }
 
-button:active {
-  transform: translateY(0);
-}
-
-/* Enhanced Transaction List */
-.transaction-list {
+/* Transaction List */
+ul {
   list-style: none;
-  margin-top: 24px;
+  margin-top: 20px;
   padding: 0;
 }
 
-.transaction-item {
-  background-color: var(--card-bg);
-  padding: 16px;
-  border-left: 4px solid;
+ul li {
+  background-color: var(--background);
+  padding: 15px;
+  border-left: 5px solid;
   border-radius: var(--radius);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: var(--shadow);
-  transition: var(--transition);
+  transition: transform 0.2s;
 }
 
-.transaction-item:hover {
+ul li:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-hover);
 }
 
-.income {
+li.income {
   border-color: var(--primary-green);
-  background-color: var(--primary-green-light);
 }
 
-.expense {
+li.expense {
   border-color: var(--primary-red);
-  background-color: var(--primary-red-light);
 }
 
-.transaction-details {
-  flex: 1;
-}
-
-.transaction-amount {
-  font-weight: 600;
-  margin-left: 16px;
-}
-
-.delete-btn {
+li button {
   background-color: var(--primary-red);
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: none;
   border-radius: var(--radius);
   color: white;
   cursor: pointer;
   font-size: 0.85rem;
-  font-weight: 500;
-  transition: var(--transition);
-  width: auto;
-  margin-top: 0;
+  transition: background-color 0.3s;
 }
 
-.delete-btn:hover {
-  background-color: var(--primary-red-hover);
+li button:hover {
+  background-color: #c82333;
 }
 
-/* Enhanced Auth Styles */
-.auth-form {
-  background-color: var(--card-bg);
-  padding: 24px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  margin-top: 24px;
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 12px;
-  margin-top: 18px;
-}
-
-.auth-buttons button {
-  flex: 1;
-}
-
-/* Header */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-#logout-btn {
-  width: auto;
-  padding: 8px 16px;
-  background-color: var(--primary-red);
-  margin-top: 0;
-}
-
-#logout-btn:hover {
-  background-color: var(--primary-red-hover);
-}
-
-/* Utility Classes */
-.text-center {
-  text-align: center;
-}
-
-.mt-1 { margin-top: 8px; }
-.mt-2 { margin-top: 16px; }
-.mt-3 { margin-top: 24px; }
-
-/* Enhanced Loading State */
-.loading {
-  position: relative;
-  pointer-events: none;
-}
-
-.loading::after {
-  content: "";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: translateY(-50%) rotate(360deg); }
-}
-
-/* Enhanced Disabled State */
-button:disabled {
-  background-color: #cccccc !important;
-  cursor: not-allowed;
-  transform: none !important;
-  opacity: 0.7;
+/* Chart */
+canvas {
+  margin-top: 30px;
+  width: 100% !important;
+  height: auto !important;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .container {
-    padding: 22px;
+    padding: 20px;
   }
 
   h1 {
@@ -293,15 +157,28 @@ button:disabled {
   h2 {
     font-size: 1.2rem;
   }
+
+  button,
+  .form input,
+  .form select,
+  .filter select {
+    font-size: 0.95rem;
+  }
+
+  li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  li button {
+    margin-top: 8px;
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
-  body {
-    padding: 16px;
-  }
-  
   .container {
-    padding: 18px;
+    padding: 15px;
   }
 
   h1 {
@@ -311,19 +188,77 @@ button:disabled {
   h2 {
     font-size: 1.1rem;
   }
+}
 
-  .transaction-item {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  border-radius: var(--radius);
+  font-size: 1rem;
+  cursor: pointer;
+}
 
-  .transaction-amount {
-    margin-left: 0;
-    margin-top: 8px;
-  }
+/* Auth Styles */
+.auth-form {
+  background-color: var(--card-bg);
+  padding: 25px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-top: 20px;
+}
 
-  .delete-btn {
-    width: 100%;
-    margin-top: 8px;
-  }
+.auth-form input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.auth-buttons button {
+  flex: 1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+#logout-btn {
+  width: auto;
+  padding: 8px 15px;
+  background-color: var(--primary-red);
+}
+
+/* Tambahkan di style.css */
+button:disabled {
+  background-color: #cccccc !important;
+  cursor: not-allowed;
+}
+
+.loading {
+  position: relative;
+}
+.loading::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
 }
