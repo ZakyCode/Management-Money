@@ -21,6 +21,7 @@ const passwordInput = document.getElementById("auth-password");
 const balanceDisplay = document.getElementById("balance");
 const transactionList = document.getElementById("transactionList");
 const filterCategory = document.getElementById("filterCategory");
+const deleteAllBtn = document.getElementById("deleteAllBtn");
 
 // Fungsi utilitas
 function formatRupiah(number) {
@@ -171,6 +172,7 @@ async function loadTransactions() {
   
   // Reset filter dropdown
   filterCategory.value = "";
+  deleteAllBtn.style.display = "none";
   transactionList.innerHTML = "";
 }
 
@@ -213,6 +215,72 @@ async function deleteTransaction(index) {
     timer: 1500,
     showConfirmButton: false
   });
+}
+
+// Fungsi untuk menghapus semua transaksi berdasarkan filter
+async function deleteAllFilteredTransactions() {
+  const selectedCategory = filterCategory.value;
+  
+  if (!selectedCategory) {
+    await showAlert('error', 'Error', 'Pilih kategori terlebih dahulu');
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: 'Apakah Anda yakin?',
+    html: `Anda akan menghapus <strong>semua transaksi</strong> ${selectedCategory === 'Semua' ? '' : 'dengan kategori ' + selectedCategory}`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Ya, hapus semua!',
+    cancelButtonText: 'Batal'
+  });
+
+  if (!result.isConfirmed) return;
+
+  // Dapatkan user ID dari sesi
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    await showAlert('error', 'Error', 'Silakan login kembali');
+    return;
+  }
+
+  try {
+    let query = supabase
+      .from('transactions')
+      .delete()
+      .eq('user_id', user.id);
+
+    // Jika bukan "Semua", tambahkan filter kategori
+    if (selectedCategory !== 'Semua') {
+      query = query.eq('category', selectedCategory);
+    }
+
+    const { error } = await query;
+
+    if (error) throw error;
+
+    // Perbarui tampilan
+    await loadTransactions();
+    updateChart();
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Berhasil',
+      text: `Semua transaksi ${selectedCategory === 'Semua' ? '' : 'kategori ' + selectedCategory} berhasil dihapus`,
+      timer: 1500,
+      showConfirmButton: false
+    });
+  } catch (error) {
+    await showAlert('error', 'Error', 'Gagal menghapus transaksi: ' + error.message);
+  }
+}
+
+// Fungsi untuk menampilkan/menyembunyikan tombol Hapus Semua
+function toggleDeleteAllButton() {
+  const selected = filterCategory.value;
+  deleteAllBtn.style.display = selected ? 'block' : 'none';
 }
 
 // Fungsi autentikasi
@@ -361,10 +429,14 @@ document.addEventListener("DOMContentLoaded", () => {
   checkSession();
   setupPasswordToggle();
   document.getElementById("form").addEventListener("submit", addTransaction);
-  filterCategory.addEventListener("change", filterTransactions);
+  filterCategory.addEventListener("change", () => {
+    filterTransactions();
+    toggleDeleteAllButton();
+  });
   loginBtn.addEventListener("click", handleLogin);
   registerBtn.addEventListener("click", handleRegister);
   logoutBtn.addEventListener("click", handleLogout);
+  deleteAllBtn.addEventListener("click", deleteAllFilteredTransactions);
 });
 
 // Fungsi global untuk delete
