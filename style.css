@@ -266,6 +266,12 @@ canvas {
   background-color: var(--primary-red);
 }
 
+#deleteAllBtn{
+  width: auto;
+  padding: 8px 15px;
+  background-color: var(--primary-red);
+}
+
 /* Tambahkan di style.css */
 button:disabled {
   background-color: #cccccc !important;
