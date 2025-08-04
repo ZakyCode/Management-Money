@@ -1,554 +1,300 @@
-// Supabase module import (gunakan ES Module via CDN)
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-// Supabase credentials
-const supabaseUrl = "https://tvkoamtxxmmqpvsotjda.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2a29hbXR4eG1tcXB2c290amRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NTkwNjYsImV4cCI6MjA2MzEzNTA2Nn0.cr2MXxUXh0RgYnThkDY3Qfn2FofP4YwPKNkTovwruSo";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-let balance = 0;
-let transactions = [];
-let chart;
-
-// DOM Elements
-const authContainer = document.getElementById("auth-container");
-const appContainer = document.getElementById("app-container");
-const loginBtn = document.getElementById("login-btn");
-const registerBtn = document.getElementById("register-btn");
-const logoutBtn = document.getElementById("logout-btn");
-const emailInput = document.getElementById("auth-email");
-const passwordInput = document.getElementById("auth-password");
-const balanceDisplay = document.getElementById("balance");
-const transactionList = document.getElementById("transactionList");
-const filterCategory = document.getElementById("filterCategory");
-const deleteAllBtn = document.getElementById("deleteAllBtn");
-
-// Fungsi utilitas
-function formatRupiah(number) {
-  return "Rp " + number.toLocaleString("id-ID");
+/* Reset dasar */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-function updateBalanceDisplay() {
-  balanceDisplay.textContent = formatRupiah(balance);
+/* Warna dan font */
+:root {
+  --primary-green: #28a745;
+  --primary-red: #dc3545;
+  --background: #f9f9f9;
+  --card-bg: #ffffff;
+  --text-dark: #333;
+  --text-light: #777;
+  --border: #ddd;
+  --shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  --radius: 10px;
 }
 
-async function showAlert(icon, title, text) {
-  await Swal.fire({
-    icon,
-    title,
-    text
-  });
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--background);
+  color: var(--text-dark);
+  padding: 20px;
 }
 
-function updateChart() {
-  const incomeTotal = transactions.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
-  const expenseTotal = transactions.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
-
-  const data = {
-    labels: ["Pemasukan", "Pengeluaran"],
-    datasets: [{
-      label: "Jumlah",
-      data: [incomeTotal, expenseTotal],
-      backgroundColor: ["green", "red"]
-    }]
-  };
-
-  if (chart) {
-    chart.data = data;
-    chart.update();
-  } else {
-    const ctx = document.getElementById("myChart").getContext("2d");
-    chart = new Chart(ctx, {
-      type: "bar",
-      data: data,
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
-  }
+.container {
+  max-width: 600px;
+  margin: auto;
+  background-color: var(--card-bg);
+  padding: 25px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
 }
 
-function renderTransactions(filteredList = transactions) {
-  transactionList.innerHTML = "";
-  filteredList.forEach((tx, index) => {
-    const li = document.createElement("li");
-    li.classList.add(tx.type);
-    li.innerHTML = `
-      ${tx.description} - ${tx.category} - ${formatRupiah(tx.amount)}
-      <button onclick="deleteTransaction(${index})">Hapus</button>
-    `;
-    transactionList.appendChild(li);
-  });
+
+
+/* togle password */
+.password-container {
+  position: relative;
+  margin-top: 10px;
 }
 
-// Fungsi transaksi
-async function addTransaction(e) {
-  e.preventDefault();
-
-  const desc = document.getElementById("desc").value.trim();
-  const rawAmount = document.getElementById("amount").value.replace(/\./g, "");
-  const amount = parseFloat(rawAmount);
-  const type = document.getElementById("type").value;
-  const category = document.getElementById("category").value;
-
-  if (!desc || isNaN(amount) || amount <= 0 || type === "Jenis" || category === "Semua") {
-    await showAlert('error', 'Error', 'Isi semua kolom dengan benar!');
-    return;
-  }
-
-  // Dapatkan user ID dari sesi
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    await showAlert('error', 'Error', 'Silakan login kembali');
-    return;
-  }
-
-  const transaction = { 
-    description: desc, 
-    amount, 
-    type, 
-    category,
-    user_id: user.id 
-  };
-
-  const { data, error } = await supabase
-    .from("transactions")
-    .insert([transaction])
-    .select();
-
-  if (error) {
-    await showAlert('error', 'Error', 'Gagal menambahkan transaksi: ' + error.message);
-    return;
-  }
-
-  transactions.unshift(data[0]);
-  balance += type === "income" ? amount : -amount;
-
-  document.getElementById("desc").value = "";
-  document.getElementById("amount").value = "";
-  document.getElementById("type").value = "Jenis";
-  document.getElementById("category").value = "Semua";
-
-  updateBalanceDisplay();
-  filterTransactions();
-  updateChart();
-
-  await Swal.fire({
-    icon: 'success',
-    title: 'Berhasil',
-    text: 'Transaksi berhasil ditambahkan',
-    timer: 1500,
-    showConfirmButton: false
-  });
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 60%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  padding: 0 10px;
 }
 
-async function loadTransactions() {
-  // Dapatkan user ID dari sesi
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
-
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    await showAlert('error', 'Error', 'Gagal memuat transaksi: ' + error.message);
-    return;
-  }
-
-  transactions = data;
-  balance = 0;
-  transactions.forEach(t => {
-    balance += t.type === "income" ? t.amount : -t.amount;
-  });
-
-  updateBalanceDisplay();
-  updateChart();
-  
-  // Reset filter dropdown
-  filterCategory.value = "";
-  deleteAllBtn.style.display = "none";
-  transactionList.innerHTML = "";
+.toggle-password i {
+  font-style: normal;
+  color: #777;
+  font-size: 1.2rem;
 }
 
-async function deleteTransaction(index) {
-  const tx = transactions[index];
-  
-  const result = await Swal.fire({
-    title: 'Apakah Anda yakin?',
-    text: `Anda akan menghapus transaksi "${tx.description}"`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Ya, hapus!',
-    cancelButtonText: 'Batal'
-  });
-
-  if (!result.isConfirmed) return;
-
-  const { error } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", tx.id);
-
-  if (error) {
-    await showAlert('error', 'Error', 'Gagal menghapus transaksi: ' + error.message);
-    return;
-  }
-
-  balance += tx.type === "income" ? -tx.amount : tx.amount;
-  transactions.splice(index, 1);
-  updateBalanceDisplay();
-  filterTransactions();
-  updateChart();
-
-  await Swal.fire({
-    icon: 'success',
-    title: 'Berhasil',
-    text: 'Transaksi berhasil dihapus',
-    timer: 1500,
-    showConfirmButton: false
-  });
+/* Pastikan input password memiliki padding kanan yang cukup */
+#auth-password {
+  padding-right: 40px !important;
 }
 
-// Fungsi untuk menghapus semua transaksi berdasarkan filter
-async function deleteAllFilteredTransactions() {
-  const selectedCategory = filterCategory.value;
-  
-  if (!selectedCategory) {
-    await showAlert('error', 'Error', 'Pilih kategori terlebih dahulu');
-    return;
+
+/* Heading */
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+/* Form */
+.form,
+.filter {
+  margin-top: 20px;
+}
+
+.form input,
+.form select,
+.filter select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  transition: border 0.3s;
+}
+
+.form input:focus,
+.form select:focus,
+.filter select:focus {
+  border-color: var(--primary-green);
+  outline: none;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background-color: var(--primary-green);
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #218838;
+}
+
+/* Transaction List */
+ul {
+  list-style: none;
+  margin-top: 20px;
+  padding: 0;
+}
+
+ul li {
+  background-color: var(--background);
+  padding: 15px;
+  border-left: 5px solid;
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+
+ul li:hover {
+  transform: translateY(-2px);
+}
+
+li.income {
+  border-color: var(--primary-green);
+}
+
+li.expense {
+  border-color: var(--primary-red);
+}
+
+li button {
+  background-color: var(--primary-red);
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.3s;
+}
+
+li button:hover {
+  background-color: #c82333;
+}
+
+/* Chart */
+canvas {
+  margin-top: 30px;
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
   }
 
-  const result = await Swal.fire({
-    title: 'Apakah Anda yakin?',
-    html: `Anda akan menghapus <strong>semua transaksi</strong> ${selectedCategory === 'Semua' ? '' : 'dengan kategori ' + selectedCategory}`,
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Ya, hapus semua!',
-    cancelButtonText: 'Batal'
-  });
-
-  if (!result.isConfirmed) return;
-
-  // Dapatkan user ID dari sesi
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    await showAlert('error', 'Error', 'Silakan login kembali');
-    return;
+  h1 {
+    font-size: 1.6rem;
   }
 
-  try {
-    let query = supabase
-      .from('transactions')
-      .delete()
-      .eq('user_id', user.id);
+  h2 {
+    font-size: 1.2rem;
+  }
 
-    // Jika bukan "Semua", tambahkan filter kategori
-    if (selectedCategory !== 'Semua') {
-      query = query.eq('category', selectedCategory);
-    }
+  button,
+  .form input,
+  .form select,
+  .filter select {
+    font-size: 0.95rem;
+  }
 
-    const { error } = await query;
+  li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    if (error) throw error;
-
-    // Perbarui tampilan
-    await loadTransactions();
-    updateChart();
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Berhasil',
-      text: `Semua transaksi ${selectedCategory === 'Semua' ? '' : 'kategori ' + selectedCategory} berhasil dihapus`,
-      timer: 1500,
-      showConfirmButton: false
-    });
-  } catch (error) {
-    await showAlert('error', 'Error', 'Gagal menghapus transaksi: ' + error.message);
+  li button {
+    margin-top: 8px;
+    width: 100%;
   }
 }
 
-// Fungsi untuk menampilkan/menyembunyikan tombol Hapus Semua
-function toggleDeleteAllButton() {
-  const selected = filterCategory.value;
-  deleteAllBtn.style.display = selected ? 'block' : 'none';
-}
-
-// Fungsi autentikasi
-async function handleLogin() {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if (!email || !password) {
-    await showAlert('error', 'Error', 'Email dan password harus diisi');
-    return;
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) {
-    await showAlert('error', 'Login Gagal', 'Akun tidak terdaftar atau password salah!');
-    return;
+  h1 {
+    font-size: 1.4rem;
   }
 
-  showApp();
-}
-
-async function handleRegister() {
-  const email = emailInput.value.trim();
-  const password = passwordInput.value.trim();
-
-  if (!email || !password) {
-    await showAlert('error', 'Error', 'Email dan password harus diisi');
-    return;
-  }
-
-  if (password.length < 6) {
-    await showAlert('error', 'Error', 'Password minimal 6 karakter');
-    return;
-  }
-
-  try {
-    // Cek apakah email sudah terdaftar menggunakan RPC
-    const { data: emailRegistered, error: checkError } = await supabase
-      .rpc('is_email_registered', { email_text: email });
-
-    if (checkError) throw checkError;
-    
-    if (emailRegistered) {
-      await showAlert('error', 'Pendaftaran Gagal', 'Email sudah terdaftar! Silakan login atau gunakan email lain');
-      return;
-    }
-
-    // Lanjutkan pendaftaran jika email belum terdaftar
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          email: email
-        }
-      }
-    });
-
-    if (error) throw error;
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Registrasi Berhasil!',
-      html: 'Tolong cek email Anda untuk verifikasi dan silakan login',
-      confirmButtonText: 'OK'
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    await showAlert('error', 'Registrasi Gagal', error.message || 'Terjadi kesalahan saat mendaftar');
+  h2 {
+    font-size: 1.1rem;
   }
 }
 
-async function handleLogout() {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    await showAlert('error', 'Error', 'Gagal logout: ' + error.message);
-    return;
-  }
-
-  showAuth();
+  border-radius: var(--radius);
+  font-size: 1rem;
+  cursor: pointer;
 }
 
-// Fungsi untuk reset password
-async function handleResetPassword() {
-  const email = document.getElementById('reset-email').value.trim();
-  const newPassword = document.getElementById('new-password').value.trim();
-  
-  if (!email || !newPassword) {
-    await showAlert('error', 'Error', 'Email dan password baru harus diisi');
-    return;
-  }
-  
-  if (newPassword.length < 6) {
-    await showAlert('error', 'Error', 'Password minimal 6 karakter');
-    return;
-  }
-  
-  try {
-    // Kirim email reset password
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.href // Redirect ke halaman ini setelah reset
-    });
-    
-    if (resetError) throw resetError;
-    
-    // Setelah email dikirim, update password
-    const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password: newPassword
-    });
-    
-    if (authError) throw authError;
-    
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword
-    });
-    
-    if (updateError) throw updateError;
-    
-    await Swal.fire({
-      icon: 'success',
-      title: 'Password Berhasil Diubah!',
-      text: 'Silakan login dengan password baru Anda',
-      confirmButtonText: 'OK'
-    });
-    
-    // Reset form dan kembali ke login
-    document.getElementById('reset-password-form').reset();
-    hideResetPasswordModal();
-    showAuth();
-  } catch (error) {
-    console.error('Reset password error:', error);
-    await showAlert('error', 'Gagal Reset Password', error.message || 'Terjadi kesalahan saat reset password');
-  }
+/* Auth Styles */
+.auth-form {
+  background-color: var(--card-bg);
+  padding: 25px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-top: 20px;
 }
 
-// Fungsi untuk menampilkan modal reset password
-function showResetPasswordModal() {
-  document.getElementById('reset-password-modal').style.display = 'flex';
-  document.getElementById('auth-container').style.display = 'none';
+.auth-form input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
 }
 
-// Fungsi untuk menyembunyikan modal reset password
-function hideResetPasswordModal() {
-  document.getElementById('reset-password-modal').style.display = 'none';
-  document.getElementById('auth-container').style.display = 'block';
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
 }
 
-function showApp() {
-  authContainer.style.display = "none";
-  appContainer.style.display = "block";
-  loadTransactions();
+.auth-buttons button {
+  flex: 1;
 }
 
-function showAuth() {
-  authContainer.style.display = "block";
-  appContainer.style.display = "none";
-  transactions = [];
-  balance = 0;
-  updateBalanceDisplay();
-  transactionList.innerHTML = "";
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
-function filterTransactions() {
-  const selected = filterCategory.value;
-  if (!selected) {
-    transactionList.innerHTML = "";
-    return;
-  }
-  
-  if (selected === "Semua") {
-    renderTransactions();
-  } else {
-    const filtered = transactions.filter(t => t.category === selected);
-    renderTransactions(filtered);
-  }
+#logout-btn {
+  width: auto;
+  padding: 8px 15px;
+  background-color: var(--primary-red);
 }
 
-// Format input jumlah otomatis dengan titik ribuan
-const amountInput = document.getElementById("amount");
-amountInput.addEventListener("input", (e) => {
-  let value = e.target.value.replace(/\D/g, "");
-  if (!value) {
-    e.target.value = "";
-    return;
-  }
-  e.target.value = parseInt(value).toLocaleString("id-ID");
-});
-
-function setupPasswordToggle() {
-  // Untuk password login
-  const loginPasswordInput = document.getElementById('auth-password');
-  const loginTogglePassword = document.querySelector('.auth-form .toggle-password');
-  
-  if (loginPasswordInput && loginTogglePassword) {
-    loginTogglePassword.addEventListener('click', function() {
-      const type = loginPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      loginPasswordInput.setAttribute('type', type);
-      
-      const icon = this.querySelector('i');
-      icon.classList.toggle('fa-eye');
-      icon.classList.toggle('fa-eye-slash');
-    });
-  }
-  
-  // Untuk password reset
-  const resetPasswordInput = document.getElementById('new-password');
-  const resetTogglePassword = document.querySelector('#reset-password-form .toggle-password');
-  
-  if (resetPasswordInput && resetTogglePassword) {
-    resetTogglePassword.addEventListener('click', function() {
-      const type = resetPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      resetPasswordInput.setAttribute('type', type);
-      
-      const icon = this.querySelector('i');
-      icon.classList.toggle('fa-eye');
-      icon.classList.toggle('fa-eye-slash');
-    });
-  }
+#deleteAllBtn{
+  width: auto;
+  padding: 8px 15px;
+  background-color: var(--primary-red);
 }
 
-// Event listener
-document.addEventListener("DOMContentLoaded", () => {
-  checkSession();
-  setupPasswordToggle();
-  document.getElementById("form").addEventListener("submit", addTransaction);
-  filterCategory.addEventListener("change", () => {
-    filterTransactions();
-    toggleDeleteAllButton();
-  });
-  loginBtn.addEventListener("click", handleLogin);
-  registerBtn.addEventListener("click", handleRegister);
-  logoutBtn.addEventListener("click", handleLogout);
-  deleteAllBtn.addEventListener("click", deleteAllFilteredTransactions);
-  
-  // Event listener untuk lupa password
-  document.getElementById('forgot-password-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    showResetPasswordModal();
-  });
-  
-  // Event listener untuk kembali ke login
-  document.getElementById('back-to-login-link')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideResetPasswordModal();
-  });
-  
-  // Event listener untuk form reset password
-  document.getElementById('reset-password-form')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    handleResetPassword();
-  });
-});
+/* Tambahkan di style.css */
+button:disabled {
+  background-color: #cccccc !important;
+  cursor: not-allowed;
+}
 
-// Fungsi global untuk delete
-window.deleteTransaction = deleteTransaction;
+.loading {
+  position: relative;
+}
+.loading::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  border: 2px solid white;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+}
 
-// Cek sesi saat pertama kali load
-async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (session) {
-    showApp();
-  } else {
-    showAuth();
-  }
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
 }
