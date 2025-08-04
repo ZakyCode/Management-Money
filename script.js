@@ -53,7 +53,7 @@ function updateChart() {
     datasets: [{
       label: "Jumlah",
       data: [incomeTotal, expenseTotal],
-      backgroundColor: ["green", "red"]
+      backgroundColor: ["#4CAF50", "#F44336"]
     }]
   };
 
@@ -69,6 +69,11 @@ function updateChart() {
         responsive: true,
         plugins: {
           legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
         }
       }
     });
@@ -81,8 +86,14 @@ function renderTransactions(filteredList = transactions) {
     const li = document.createElement("li");
     li.classList.add(tx.type);
     li.innerHTML = `
-      ${tx.description} - ${tx.category} - ${formatRupiah(tx.amount)}
-      <button onclick="deleteTransaction(${index})">Hapus</button>
+      <div class="tx-details">
+        <span class="tx-description">${tx.description}</span>
+        <span class="tx-category">${tx.category}</span>
+        <span class="tx-amount ${tx.type}">${formatRupiah(tx.amount)}</span>
+      </div>
+      <button class="delete-btn" onclick="deleteTransaction(${index})">
+        <i class="fas fa-trash"></i>
+      </button>
     `;
     transactionList.appendChild(li);
   });
@@ -180,7 +191,7 @@ async function loadTransactions() {
   // Reset filter dropdown
   filterCategory.value = "";
   deleteAllBtn.style.display = "none";
-  transactionList.innerHTML = "";
+  renderTransactions();
 }
 
 async function deleteTransaction(index) {
@@ -499,10 +510,13 @@ async function handlePasswordReset() {
 
       if (error) throw error;
 
+      // Logout setelah reset password
+      await supabase.auth.signOut();
+
       await Swal.fire({
         icon: 'success',
         title: 'Password Berhasil Diubah!',
-        text: 'Anda sekarang bisa login dengan password baru Anda',
+        text: 'Silakan login dengan password baru Anda',
         confirmButtonText: 'Ke Halaman Login'
       });
 
