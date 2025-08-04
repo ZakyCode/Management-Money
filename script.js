@@ -489,29 +489,36 @@ async function handlePasswordReset() {
         }
       });
 
-      // Update password menggunakan token
-      const { error } = await supabase.auth.updateUser({
+      // 1. Update password menggunakan token
+      const { error: updateError } = await supabase.auth.updateUser({
         password: formValues.password
       }, {
         accessToken,
         refreshToken
       });
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
+      // 2. Logout pengguna setelah reset password
+      const { error: logoutError } = await supabase.auth.signOut();
+      if (logoutError) throw logoutError;
+
+      // 3. Bersihkan URL dari parameter reset
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // 4. Tampilkan pesan sukses
       await Swal.fire({
         icon: 'success',
         title: 'Password Berhasil Diubah!',
-        text: 'Anda sekarang bisa login dengan password baru Anda',
+        html: 'Silakan login dengan password baru Anda',
         confirmButtonText: 'Ke Halaman Login'
       });
 
-      // Bersihkan parameter URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-      
-      // Tampilkan form login
+      // 5. Pastikan tampilkan halaman auth
       showAuth();
+
     } catch (error) {
+      console.error('Error resetting password:', error);
       await Swal.fire({
         icon: 'error',
         title: 'Gagal Reset Password',
@@ -545,6 +552,8 @@ function showApp() {
 function showAuth() {
   authContainer.style.display = "block";
   appContainer.style.display = "none";
+  emailInput.value = "";
+  passwordInput.value = "";
   transactions = [];
   balance = 0;
   updateBalanceDisplay();
