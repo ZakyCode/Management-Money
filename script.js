@@ -367,6 +367,72 @@ async function handleLogout() {
   showAuth();
 }
 
+// Fungsi untuk reset password
+async function handleResetPassword() {
+  const email = document.getElementById('reset-email').value.trim();
+  const newPassword = document.getElementById('new-password').value.trim();
+  
+  if (!email || !newPassword) {
+    await showAlert('error', 'Error', 'Email dan password baru harus diisi');
+    return;
+  }
+  
+  if (newPassword.length < 6) {
+    await showAlert('error', 'Error', 'Password minimal 6 karakter');
+    return;
+  }
+  
+  try {
+    // Kirim email reset password
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href // Redirect ke halaman ini setelah reset
+    });
+    
+    if (resetError) throw resetError;
+    
+    // Setelah email dikirim, update password
+    const { data: { user }, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password: newPassword
+    });
+    
+    if (authError) throw authError;
+    
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (updateError) throw updateError;
+    
+    await Swal.fire({
+      icon: 'success',
+      title: 'Password Berhasil Diubah!',
+      text: 'Silakan login dengan password baru Anda',
+      confirmButtonText: 'OK'
+    });
+    
+    // Reset form dan kembali ke login
+    document.getElementById('reset-password-form').reset();
+    hideResetPasswordModal();
+    showAuth();
+  } catch (error) {
+    console.error('Reset password error:', error);
+    await showAlert('error', 'Gagal Reset Password', error.message || 'Terjadi kesalahan saat reset password');
+  }
+}
+
+// Fungsi untuk menampilkan modal reset password
+function showResetPasswordModal() {
+  document.getElementById('reset-password-modal').style.display = 'flex';
+  document.getElementById('auth-container').style.display = 'none';
+}
+
+// Fungsi untuk menyembunyikan modal reset password
+function hideResetPasswordModal() {
+  document.getElementById('reset-password-modal').style.display = 'none';
+  document.getElementById('auth-container').style.display = 'block';
+}
+
 function showApp() {
   authContainer.style.display = "none";
   appContainer.style.display = "block";
@@ -409,13 +475,29 @@ amountInput.addEventListener("input", (e) => {
 });
 
 function setupPasswordToggle() {
-  const passwordInput = document.getElementById('auth-password');
-  const togglePassword = document.querySelector('.toggle-password');
+  // Untuk password login
+  const loginPasswordInput = document.getElementById('auth-password');
+  const loginTogglePassword = document.querySelector('.auth-form .toggle-password');
   
-  if (passwordInput && togglePassword) {
-    togglePassword.addEventListener('click', function() {
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
+  if (loginPasswordInput && loginTogglePassword) {
+    loginTogglePassword.addEventListener('click', function() {
+      const type = loginPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      loginPasswordInput.setAttribute('type', type);
+      
+      const icon = this.querySelector('i');
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
+    });
+  }
+  
+  // Untuk password reset
+  const resetPasswordInput = document.getElementById('new-password');
+  const resetTogglePassword = document.querySelector('#reset-password-form .toggle-password');
+  
+  if (resetPasswordInput && resetTogglePassword) {
+    resetTogglePassword.addEventListener('click', function() {
+      const type = resetPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      resetPasswordInput.setAttribute('type', type);
       
       const icon = this.querySelector('i');
       icon.classList.toggle('fa-eye');
@@ -437,6 +519,24 @@ document.addEventListener("DOMContentLoaded", () => {
   registerBtn.addEventListener("click", handleRegister);
   logoutBtn.addEventListener("click", handleLogout);
   deleteAllBtn.addEventListener("click", deleteAllFilteredTransactions);
+  
+  // Event listener untuk lupa password
+  document.getElementById('forgot-password-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showResetPasswordModal();
+  });
+  
+  // Event listener untuk kembali ke login
+  document.getElementById('back-to-login-link')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    hideResetPasswordModal();
+  });
+  
+  // Event listener untuk form reset password
+  document.getElementById('reset-password-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    handleResetPassword();
+  });
 });
 
 // Fungsi global untuk delete
