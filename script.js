@@ -379,7 +379,6 @@ async function handleRegister() {
   }
 }
 
-// Fungsi untuk mengirim email reset password
 async function handleForgotPassword() {
   const { value: email } = await Swal.fire({
     title: 'Reset Password',
@@ -414,9 +413,8 @@ async function handleForgotPassword() {
       }
     });
 
-    // Pastikan URL redirect sesuai dengan yang terdaftar di Supabase
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://aturuang-zaky.vercel.app/reset-password' // SESUAIKAN DENGAN URL YANG TERDAFTAR
+      redirectTo: window.location.href
     });
 
     if (error) throw error;
@@ -428,7 +426,6 @@ async function handleForgotPassword() {
       confirmButtonText: 'Mengerti'
     });
   } catch (error) {
-    console.error('Error sending reset email:', error);
     await Swal.fire({
       icon: 'error',
       title: 'Gagal Mengirim Email',
@@ -438,15 +435,12 @@ async function handleForgotPassword() {
   }
 }
 
-// Fungsi untuk menangani reset password
 async function handlePasswordReset() {
-  // Cek hash URL (Supabase menggunakan hash bukan query params)
-  const hash = window.location.hash.substring(1);
-  const params = new URLSearchParams(hash);
-  
-  const accessToken = params.get('access_token');
-  const refreshToken = params.get('refresh_token');
-  const type = params.get('type');
+  // Cek parameter URL untuk reset password
+  const urlParams = new URLSearchParams(window.location.search);
+  const accessToken = urlParams.get('access_token');
+  const refreshToken = urlParams.get('refresh_token');
+  const type = urlParams.get('type');
 
   // Jika ini adalah callback reset password
   if (type === 'recovery' && accessToken && refreshToken) {
@@ -495,32 +489,29 @@ async function handlePasswordReset() {
         }
       });
 
-      // Update password (tidak perlu token karena sudah di hash URL)
-      const { error: updateError } = await supabase.auth.updateUser({
+      // Update password menggunakan token
+      const { error } = await supabase.auth.updateUser({
         password: formValues.password
+      }, {
+        accessToken,
+        refreshToken
       });
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
-      // Logout pengguna setelah reset password
-      const { error: logoutError } = await supabase.auth.signOut();
-      if (logoutError) throw logoutError;
-
-      // Bersihkan URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Tampilkan pesan sukses
       await Swal.fire({
         icon: 'success',
         title: 'Password Berhasil Diubah!',
-        html: 'Silakan login dengan password baru Anda',
+        text: 'Anda sekarang bisa login dengan password baru Anda',
         confirmButtonText: 'Ke Halaman Login'
       });
 
-      // Tampilkan halaman login
+      // Bersihkan parameter URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Tampilkan form login
       showAuth();
     } catch (error) {
-      console.error('Error resetting password:', error);
       await Swal.fire({
         icon: 'error',
         title: 'Gagal Reset Password',
@@ -530,6 +521,7 @@ async function handlePasswordReset() {
     }
   }
 }
+
 async function handleLogout() {
   const { error } = await supabase.auth.signOut();
   if (error) {
@@ -553,8 +545,6 @@ function showApp() {
 function showAuth() {
   authContainer.style.display = "block";
   appContainer.style.display = "none";
-  emailInput.value = "";
-  passwordInput.value = "";
   transactions = [];
   balance = 0;
   updateBalanceDisplay();
