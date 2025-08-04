@@ -300,17 +300,36 @@ button:disabled {
 }
 
 /* css Lupa Password */
-.forgot-password {
+#reset-password-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+#reset-password-modal .auth-form {
+  max-width: 400px;
+  width: 90%;
+  margin: 0 auto;
+}
+
+.back-to-login {
   text-align: center;
   margin-top: 15px;
 }
 
-.forgot-password a {
-  color: var(--primary-red);
+.back-to-login a {
+  color: var(--primary-green);
   text-decoration: none;
   font-size: 0.9rem;
 }
 
-.forgot-password a:hover {
+.back-to-login a:hover {
   text-decoration: underline;
 }
