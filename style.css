@@ -298,3 +298,19 @@ button:disabled {
 @keyframes spin {
   to { transform: translateY(-50%) rotate(360deg); }
 }
+
+/* css Lupa Password */
+.forgot-password {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.forgot-password a {
+  color: var(--primary-red);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.forgot-password a:hover {
+  text-decoration: underline;
+}
