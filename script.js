@@ -16,6 +16,7 @@ const appContainer = document.getElementById("app-container");
 const loginBtn = document.getElementById("login-btn");
 const registerBtn = document.getElementById("register-btn");
 const logoutBtn = document.getElementById("logout-btn");
+const forgotPasswordLink = document.getElementById("forgot-password-link");
 const emailInput = document.getElementById("auth-email");
 const passwordInput = document.getElementById("auth-password");
 const balanceDisplay = document.getElementById("balance");
@@ -23,7 +24,10 @@ const transactionList = document.getElementById("transactionList");
 const filterCategory = document.getElementById("filterCategory");
 const deleteAllBtn = document.getElementById("deleteAllBtn");
 
-// Fungsi utilitas
+// ==============================================
+// FUNGSI UTILITAS
+// ==============================================
+
 function formatRupiah(number) {
   return "Rp " + number.toLocaleString("id-ID");
 }
@@ -84,7 +88,10 @@ function renderTransactions(filteredList = transactions) {
   });
 }
 
-// Fungsi transaksi
+// ==============================================
+// FUNGSI TRANSAKSI
+// ==============================================
+
 async function addTransaction(e) {
   e.preventDefault();
 
@@ -217,7 +224,6 @@ async function deleteTransaction(index) {
   });
 }
 
-// Fungsi untuk menghapus semua transaksi berdasarkan filter
 async function deleteAllFilteredTransactions() {
   const selectedCategory = filterCategory.value;
   
@@ -277,13 +283,15 @@ async function deleteAllFilteredTransactions() {
   }
 }
 
-// Fungsi untuk menampilkan/menyembunyikan tombol Hapus Semua
 function toggleDeleteAllButton() {
   const selected = filterCategory.value;
   deleteAllBtn.style.display = selected ? 'block' : 'none';
 }
 
-// Fungsi autentikasi
+// ==============================================
+// FUNGSI AUTENTIKASI
+// ==============================================
+
 async function handleLogin() {
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
@@ -293,17 +301,25 @@ async function handleLogin() {
     return;
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+  try {
+    // Tampilkan loading
+    loginBtn.disabled = true;
+    loginBtn.classList.add('loading');
 
-  if (error) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+
+    showApp();
+  } catch (error) {
     await showAlert('error', 'Login Gagal', 'Akun tidak terdaftar atau password salah!');
-    return;
+  } finally {
+    loginBtn.disabled = false;
+    loginBtn.classList.remove('loading');
   }
-
-  showApp();
 }
 
 async function handleRegister() {
@@ -321,6 +337,10 @@ async function handleRegister() {
   }
 
   try {
+    // Tampilkan loading
+    registerBtn.disabled = true;
+    registerBtn.classList.add('loading');
+
     // Cek apakah email sudah terdaftar menggunakan RPC
     const { data: emailRegistered, error: checkError } = await supabase
       .rpc('is_email_registered', { email_text: email });
@@ -352,8 +372,153 @@ async function handleRegister() {
       confirmButtonText: 'OK'
     });
   } catch (error) {
-    console.error('Registration error:', error);
     await showAlert('error', 'Registrasi Gagal', error.message || 'Terjadi kesalahan saat mendaftar');
+  } finally {
+    registerBtn.disabled = false;
+    registerBtn.classList.remove('loading');
+  }
+}
+
+async function handleForgotPassword() {
+  const { value: email } = await Swal.fire({
+    title: 'Reset Password',
+    input: 'email',
+    inputLabel: 'Masukkan email Anda yang terdaftar',
+    inputPlaceholder: 'contoh@email.com',
+    inputAttributes: {
+      required: 'required'
+    },
+    showCancelButton: true,
+    confirmButtonText: 'Kirim Link Reset',
+    cancelButtonText: 'Batal',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Harap masukkan email Anda!';
+      }
+      if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
+        return 'Format email tidak valid!';
+      }
+    }
+  });
+
+  if (!email) return;
+
+  try {
+    // Tampilkan loading
+    Swal.fire({
+      title: 'Mengirim email...',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href
+    });
+
+    if (error) throw error;
+
+    await Swal.fire({
+      icon: 'success',
+      title: 'Email Terkirim!',
+      html: `Kami telah mengirim link reset password ke <strong>${email}</strong>.<br><br>Silakan cek inbox email Anda.`,
+      confirmButtonText: 'Mengerti'
+    });
+  } catch (error) {
+    await Swal.fire({
+      icon: 'error',
+      title: 'Gagal Mengirim Email',
+      text: error.message || 'Terjadi kesalahan saat mengirim email reset password',
+      confirmButtonText: 'OK'
+    });
+  }
+}
+
+async function handlePasswordReset() {
+  // Cek parameter URL untuk reset password
+  const urlParams = new URLSearchParams(window.location.search);
+  const accessToken = urlParams.get('access_token');
+  const refreshToken = urlParams.get('refresh_token');
+  const type = urlParams.get('type');
+
+  // Jika ini adalah callback reset password
+  if (type === 'recovery' && accessToken && refreshToken) {
+    try {
+      // Tampilkan form reset password
+      const { value: formValues } = await Swal.fire({
+        title: 'Atur Password Baru',
+        html:
+          '<input id="swal-input1" class="swal2-input" type="password" placeholder="Password Baru" required>' +
+          '<input id="swal-input2" class="swal2-input" type="password" placeholder="Konfirmasi Password" required>',
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Simpan Password',
+        cancelButtonText: 'Batal',
+        preConfirm: () => {
+          const password = document.getElementById('swal-input1').value;
+          const confirmPassword = document.getElementById('swal-input2').value;
+          
+          if (!password || !confirmPassword) {
+            Swal.showValidationMessage('Harap isi kedua kolom password');
+            return false;
+          }
+          
+          if (password.length < 6) {
+            Swal.showValidationMessage('Password minimal 6 karakter');
+            return false;
+          }
+          
+          if (password !== confirmPassword) {
+            Swal.showValidationMessage('Password tidak cocok');
+            return false;
+          }
+          
+          return { password };
+        }
+      });
+
+      if (!formValues) return;
+
+      // Tampilkan loading
+      Swal.fire({
+        title: 'Menyimpan password...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Update password menggunakan token
+      const { error } = await supabase.auth.updateUser({
+        password: formValues.password
+      }, {
+        accessToken,
+        refreshToken
+      });
+
+      if (error) throw error;
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Password Berhasil Diubah!',
+        text: 'Anda sekarang bisa login dengan password baru Anda',
+        confirmButtonText: 'Ke Halaman Login'
+      });
+
+      // Bersihkan parameter URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // Tampilkan form login
+      showAuth();
+    } catch (error) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Gagal Reset Password',
+        text: error.message || 'Terjadi kesalahan saat menyimpan password baru',
+        confirmButtonText: 'OK'
+      });
+    }
   }
 }
 
@@ -366,6 +531,10 @@ async function handleLogout() {
 
   showAuth();
 }
+
+// ==============================================
+// FUNGSI TAMPILAN
+// ==============================================
 
 function showApp() {
   authContainer.style.display = "none";
@@ -397,17 +566,6 @@ function filterTransactions() {
   }
 }
 
-// Format input jumlah otomatis dengan titik ribuan
-const amountInput = document.getElementById("amount");
-amountInput.addEventListener("input", (e) => {
-  let value = e.target.value.replace(/\D/g, "");
-  if (!value) {
-    e.target.value = "";
-    return;
-  }
-  e.target.value = parseInt(value).toLocaleString("id-ID");
-});
-
 function setupPasswordToggle() {
   const passwordInput = document.getElementById('auth-password');
   const togglePassword = document.querySelector('.toggle-password');
@@ -424,26 +582,65 @@ function setupPasswordToggle() {
   }
 }
 
-// Event listener
+// ==============================================
+// EVENT LISTENERS
+// ==============================================
+
+// Format input jumlah otomatis dengan titik ribuan
+const amountInput = document.getElementById("amount");
+amountInput.addEventListener("input", (e) => {
+  let value = e.target.value.replace(/\D/g, "");
+  if (!value) {
+    e.target.value = "";
+    return;
+  }
+  e.target.value = parseInt(value).toLocaleString("id-ID");
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   checkSession();
   setupPasswordToggle();
+  
+  // Event listeners untuk form
   document.getElementById("form").addEventListener("submit", addTransaction);
   filterCategory.addEventListener("change", () => {
     filterTransactions();
     toggleDeleteAllButton();
   });
+  
+  // Event listeners untuk autentikasi
   loginBtn.addEventListener("click", handleLogin);
   registerBtn.addEventListener("click", handleRegister);
   logoutBtn.addEventListener("click", handleLogout);
+  forgotPasswordLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    handleForgotPassword();
+  });
   deleteAllBtn.addEventListener("click", deleteAllFilteredTransactions);
+  
+  // Cek reset password saat load
+  handlePasswordReset();
 });
+
+// ==============================================
+// FUNGSI GLOBAL & INISIALISASI
+// ==============================================
 
 // Fungsi global untuk delete
 window.deleteTransaction = deleteTransaction;
 
 // Cek sesi saat pertama kali load
 async function checkSession() {
+  // Cek dulu apakah ini callback reset password
+  const urlParams = new URLSearchParams(window.location.search);
+  const type = urlParams.get('type');
+  
+  if (type === 'recovery') {
+    // Jangan tampilkan app jika dalam proses reset password
+    showAuth();
+    return;
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   
   if (session) {
